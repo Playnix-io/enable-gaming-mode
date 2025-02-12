@@ -23,5 +23,6 @@ sudo update-grub
 #Login Fix
 sed -i '/"AutoLoginUser"/a \ \ \ \ \ \ \ \ "CompletedOOBE"\t\t"1"' ~/.steam/registry.vdf
 
+rm -rf "$HOME/Desktop/enable-gaming.desktop"
 #Rebooting
 #reboot
