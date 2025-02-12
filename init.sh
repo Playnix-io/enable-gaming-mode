@@ -3,20 +3,18 @@
 #Dependencies
 sudo pacman -Sy
 sudo pacman -S --noconfirm --needed ryzenadj yay meson base-devel ninja podman libgudev steam
-yay -S inputplumber-bin
+# No longer needed since February
+#yay -S inputplumber-bin --no-confirm --answerdiff None --answerclean None
 pamac install --no-confirm steam-deckify
 
 #Launch steam
-/usr/bin/steam &
-
-#Login Fix
-while [ ! -f "$HOME/.steam/registry.vdf" ]; do
+/usr/bin/steam > /dev/null 2>&1 &
+#Finish Steam
+while [ ! -f "$HOME/.steam/steam/config/config.vdf" ]; do
+    echo "Waiting for Steam Config..."
     sleep 1
-    kill -15 $(pidof steam)
 done
-registry="$HOME/.steam/registry.vdf"
-curl -L -o $registry "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/registry.vdf"
-
+kill -15 $(pidof steam)
 #Enable inputplumber
 sudo systemctl enable inputplumber
 sudo systemctl enable inputplumber-suspend
@@ -41,6 +39,10 @@ sudo plymouth-set-default-theme -R steamos
 
 #Clean up
 rm -rf "$HOME/Desktop/enable-gaming.desktop"
+
+#Login Fix
+registry="$HOME/.steam/registry.vdf"
+curl -L -o $registry "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/registry.vdf"
 
 
 #Rebooting
