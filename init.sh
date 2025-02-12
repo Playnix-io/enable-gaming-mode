@@ -2,9 +2,11 @@
 
 #Dependencies
 sudo pacman -Sy
-sudo pacman -S --noconfirm  ryzenadj yay meson base-devel ninja podman libgudev steam && ~/.steam/steam -silent -nofriendsui -no-browser
+sudo pacman -S --noconfirm  ryzenadj yay meson base-devel ninja podman libgudev steam
 yay -S inputplumber-bin
 pamac install --no-confirm steam-deckify
+
+#Launch steam
 
 #Enable inputplumber
 sudo systemctl enable inputplumber
