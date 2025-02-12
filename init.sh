@@ -21,8 +21,15 @@ sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=\"/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLI
 sudo update-grub
 
 #Login Fix
-sed -i '/"AutoLoginUser"/a \ \ \ \ \ \ \ \ "CompletedOOBE"\t\t"1"' ~/.steam/registry.vdf
+sed -i '/"AutoLoginUser"/a \ \ \ \ \ \ \ \ "CompletedOOBE"\t\t"1"' "$HOME/.steam/registry.vdf"
 
+#boot animation https://github.com/arvigeus/plymouth-theme-steamos
+git clone https://github.com/arvigeus/plymouth-theme-steamos
+mkdir -p /usr/share/plymouth/themes/steamos
+sudo cp -r ./plymouth-theme-steamos/ /usr/share/plymouth/themes/steamos && rm -rf plymouth-theme-steamos
+sudo plymouth-set-default-theme -R steamos
+
+#Clean up
 rm -rf "$HOME/Desktop/enable-gaming.desktop"
 #Rebooting
 #reboot
