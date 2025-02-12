@@ -49,6 +49,8 @@ curl -L -o $registry "https://raw.githubusercontent.com/Playnix-io/enable-gaming
 
 #Back to game mode icon
 curl -L -o "$HOME/Desktop/back.desktop" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/back.desktop"
-
+clear
+sleep 5
+echo "The computer will restart now..."
 #Rebooting
 sudo reboot
