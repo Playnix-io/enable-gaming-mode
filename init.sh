@@ -2,11 +2,12 @@
 
 #Dependencies
 sudo pacman -Sy
-sudo pacman -S --noconfirm  ryzenadj yay meson base-devel ninja podman libgudev steam
+sudo pacman -S --noconfirm --needed ryzenadj yay meson base-devel ninja podman libgudev steam
 yay -S inputplumber-bin
 pamac install --no-confirm steam-deckify
 
 #Launch steam
+
 
 #Enable inputplumber
 sudo systemctl enable inputplumber
@@ -16,6 +17,8 @@ sudo systemctl start inputplumber
 #DeckyLoader
 curl -L https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/install_release.sh | sh
 
+#DeckyPlugins
+
 #Grub changes
 GRUB_CONFIG="/etc/default/grub"
 GRUB_CMDLINE="amd_pstate=active amd_prefcore=enable iomem=relaxed"
@@ -23,7 +26,14 @@ sudo sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=\"/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_
 sudo update-grub
 
 #Login Fix
-#sed -i '/"AutoLoginUser"/a \ \ \ \ \ \ \ \ "CompletedOOBE"\t\t"1"' "$HOME/.steam/registry.vdf"
+registry="$HOME/.steam/registry.vdf"
+awk '
+{
+    print $0
+    if ($0 ~ /"Rate"[[:space:]]+"30000"/) {
+        print "\t\t\t\t\t\"CompletedOOBE\"\t\t\"1\""
+    }
+}' "$registry" > "${registry}.tmp" && mv "${registry}.tmp" "$registry"
 
 #boot animation https://github.com/arvigeus/plymouth-theme-steamos
 git clone https://github.com/arvigeus/plymouth-theme-steamos
@@ -35,3 +45,5 @@ sudo plymouth-set-default-theme -R steamos
 rm -rf "$HOME/Desktop/enable-gaming.desktop"
 #Rebooting
 #reboot
+echo "waiting for user"
+read pause
