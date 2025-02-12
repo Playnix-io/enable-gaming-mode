@@ -10,12 +10,7 @@ flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flat
 
 #Launch steam
 /usr/bin/steam > /dev/null 2>&1 &
-#Finish Steam
-while [ ! -f "$HOME/.steam/steam/config/config.vdf" ]; do
-    echo "Waiting for Steam Config..."
-    sleep 1
-done
-kill -15 $(pidof steam)
+
 #Enable inputplumber
 sudo systemctl enable inputplumber
 sudo systemctl enable inputplumber-suspend
@@ -41,10 +36,19 @@ sudo plymouth-set-default-theme -R steamos
 #Clean up
 rm -rf "$HOME/Desktop/enable-gaming.desktop"
 
+#Finish Steam
+while [ ! -f "$HOME/.steam/steam/config/config.vdf" ]; do
+    echo "Waiting for Steam Config..."
+    sleep 1
+done
+kill -15 $(pidof steam)
+
 #Login Fix
 registry="$HOME/.steam/registry.vdf"
 curl -L -o $registry "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/registry.vdf"
 
+#Back to game mode icon
+curl -L -o "$HOME/Desktop/back.desktop" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/back.desktop"
 
 #Rebooting
 sudo reboot
