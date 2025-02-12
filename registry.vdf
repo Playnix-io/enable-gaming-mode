@@ -1,0 +1,37 @@
+"Registry"
+{
+    "HKLM"
+    {
+        "Software"
+        {
+            "Valve"
+            {
+                "Steam"
+                {
+                    "SteamPID"		"0"
+                    "TempAppCmdLine"		""
+                    "ReLaunchCmdLine"		""
+                    "ClientLauncherType"		"0"
+                }
+            }
+        }
+    }
+    "HKCU"
+    {
+        "Software"
+        {
+            "Valve"
+            {
+                "Steam"
+                {
+                    "steamglobal"
+                    {
+                        "language"		"english"
+                    }
+                    "language"		"english"
+                    "CompletedOOBE"		"1"
+                }
+            }
+        }
+    }
+}

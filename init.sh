@@ -7,7 +7,7 @@ yay -S inputplumber-bin
 pamac install --no-confirm steam-deckify
 
 #Launch steam
-
+/usr/bin/steam &
 
 #Enable inputplumber
 sudo systemctl enable inputplumber
@@ -27,23 +27,16 @@ sudo update-grub
 
 #Login Fix
 registry="$HOME/.steam/registry.vdf"
-awk '
-{
-    print $0
-    if ($0 ~ /"Rate"[[:space:]]+"30000"/) {
-        print "\t\t\t\t\t\"CompletedOOBE\"\t\t\"1\""
-    }
-}' "$registry" > "${registry}.tmp" && mv "${registry}.tmp" "$registry"
+curl -L -o $registry "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/registry.vdf"
 
 #boot animation https://github.com/arvigeus/plymouth-theme-steamos
 git clone https://github.com/arvigeus/plymouth-theme-steamos
-mkdir -p /usr/share/plymouth/themes/steamos
+sudo mkdir -p /usr/share/plymouth/themes/steamos
 sudo cp -r ./plymouth-theme-steamos/* /usr/share/plymouth/themes/steamos/ && rm -rf plymouth-theme-steamos
 sudo plymouth-set-default-theme -R steamos
 
 #Clean up
 rm -rf "$HOME/Desktop/enable-gaming.desktop"
+
 #Rebooting
-#reboot
-echo "waiting for user"
-read pause
+sudo reboot
