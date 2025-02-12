@@ -6,7 +6,7 @@ sudo pacman -S --noconfirm --needed ryzenadj yay meson base-devel ninja podman l
 # No longer needed since February
 #yay -S inputplumber-bin --no-confirm --answerdiff None --answerclean None
 pamac install --no-confirm steam-deckify
-flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo --user
+flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 #Launch steam
 /usr/bin/steam > /dev/null 2>&1 &
