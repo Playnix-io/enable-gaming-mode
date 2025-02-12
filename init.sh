@@ -6,10 +6,16 @@ sudo pacman -S --noconfirm --needed ryzenadj yay meson base-devel ninja podman l
 # No longer needed since February
 #yay -S inputplumber-bin --no-confirm --answerdiff None --answerclean None
 pamac install --no-confirm steam-deckify
+flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo --user
 
 #Launch steam
 /usr/bin/steam > /dev/null 2>&1 &
-
+#Finish Steam
+while [ ! -f "$HOME/.steam/steam/config/config.vdf" ]; do
+    echo "Waiting for Steam Config..."
+    sleep 1
+done
+kill -15 $(pidof steam)
 #Enable inputplumber
 sudo systemctl enable inputplumber
 sudo systemctl enable inputplumber-suspend
@@ -34,13 +40,6 @@ sudo plymouth-set-default-theme -R steamos
 
 #Clean up
 rm -rf "$HOME/Desktop/enable-gaming.desktop"
-
-#Finish Steam
-while [ ! -f "$HOME/.steam/steam/config/config.vdf" ]; do
-    echo "Waiting for Steam Config..."
-    sleep 1
-done
-kill -15 $(pidof steam)
 
 #Login Fix
 registry="$HOME/.steam/registry.vdf"
