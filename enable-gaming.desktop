@@ -1,0 +1,19 @@
+[Desktop Entry]
+Comment[en_US]=
+Comment=
+Exec=sh -c 'curl -L https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/init.sh | bash'
+GenericName[en_US]=
+GenericName=
+MimeType=
+Name[en]=Enable Gaming Mode
+Name[es]=Activar Gaming Mode
+Name=Enable Gaming Mode
+Path=
+StartupNotify=false
+Terminal=true
+TerminalOptions=
+Type=Application
+X-DBUS-ServiceName=
+X-DBUS-StartupType=
+X-KDE-SubstituteUID=false
+X-KDE-Username=
