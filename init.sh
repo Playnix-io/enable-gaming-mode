@@ -9,6 +9,14 @@ pamac install --no-confirm steam-deckify
 #Launch steam
 /usr/bin/steam &
 
+#Login Fix
+while [ ! -f "$HOME/.steam/registry.vdf" ]; do
+    sleep 1
+    kill -15 $(pidof steam)
+done
+registry="$HOME/.steam/registry.vdf"
+curl -L -o $registry "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/registry.vdf"
+
 #Enable inputplumber
 sudo systemctl enable inputplumber
 sudo systemctl enable inputplumber-suspend
@@ -25,10 +33,6 @@ GRUB_CMDLINE="amd_pstate=active amd_prefcore=enable iomem=relaxed"
 sudo sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=\"/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE /" "$GRUB_CONFIG"
 sudo update-grub
 
-#Login Fix
-registry="$HOME/.steam/registry.vdf"
-curl -L -o $registry "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/registry.vdf"
-
 #boot animation https://github.com/arvigeus/plymouth-theme-steamos
 git clone https://github.com/arvigeus/plymouth-theme-steamos
 sudo mkdir -p /usr/share/plymouth/themes/steamos
@@ -37,6 +41,7 @@ sudo plymouth-set-default-theme -R steamos
 
 #Clean up
 rm -rf "$HOME/Desktop/enable-gaming.desktop"
+
 
 #Rebooting
 sudo reboot
