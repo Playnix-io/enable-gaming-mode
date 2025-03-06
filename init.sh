@@ -52,5 +52,6 @@ curl -L -o "$HOME/Desktop/back.desktop" "https://raw.githubusercontent.com/Playn
 clear
 sleep 5
 echo "The computer will restart now..."
+exit
 #Rebooting
-sudo reboot
+#sudo reboot
