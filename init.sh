@@ -47,7 +47,7 @@
             echo "SDDM config file could not be found at $CONFIG_FILE."
             exit 1
         fi
-        NEW_SESSION='plasma' # For other desktops, change here.
+        NEW_SESSION=plasma # For other desktops, change here.
         echo "playnix" | sudo -S sed -i "s/^Session=.*/Session=${NEW_SESSION}/" "$CONFIG_FILE"
         steam -shutdown
 
@@ -69,10 +69,10 @@
 
     echo "playnix" | sudo -S chmod +x /usr/bin/steamos-session-select
 
-    echo "playnix" | sudo -Sers_file="/etc/echo "playnix" | sudo -Sers.d/sddm_config_edit"
-    if [ ! -f "$echo "playnix" | sudo -Sers_file" ]; then
-        echo "ALL ALL=(ALL) NOPASSWD: /usr/bin/sed -i s/^Session=*/Session=*/ ${CONFIG_FILE}" | echo "playnix" | sudo -S tee "$echo "playnix" | sudo -Sers_file" > /dev/null
-        echo "playnix" | sudo -S chmod 440 "$echo "playnix" | sudo -Sers_file"
+    sudoers_file="/etc/sudoers.d/sddm_config_edit"
+    if [ ! -f "$sudoers_file" ]; then
+        echo "ALL ALL=(ALL) NOPASSWD: /usr/bin/sed -i s/^Session=*/Session=*/ ${CONFIG_FILE}" | sudo tee "$sudoers_file" > /dev/null
+        echo "playnix" | sudo -S chmod 440 "$sudoers_file"
     fi
 
     echo "playnix" | sudo -S usermod -a -G video $(whoami)
