@@ -1,20 +1,7 @@
 [Desktop Entry]
-Comment[en_US]=
-Comment=
-Exec=steamos-session-select
-GenericName[en_US]=
-GenericName=
-MimeType=
-Name[en]=Back to Gaming Mode
-Name[es]=Volver a Gaming Mode
-Name=Back to Gaming Mode
-Path=
-StartupNotify=false
-Terminal=true
-TerminalOptions=
+Name=Gaming Mode
+Exec=steamos-session-select gamescope
+Terminal=false
 Type=Application
-X-DBUS-ServiceName=
-X-DBUS-StartupType=
-X-KDE-SubstituteUID=false
-X-KDE-Username=
+StartupNotify=false
 Icon=steamdeck-gaming-return
