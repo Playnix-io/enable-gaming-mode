@@ -4,4 +4,4 @@ Exec=steamos-session-select gamescope
 Terminal=false
 Type=Application
 StartupNotify=false
-Icon=steamdeck-gaming-return
+Icon=applications-games
