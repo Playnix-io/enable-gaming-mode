@@ -26,6 +26,10 @@ echo "40"
 echo "#Applying fixes"
 sudo usermod -a -G video playnix
 echo 'ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video $sys$devpath/brightness", RUN+="/bin/chmod g+w $sys$devpath/brightness"' | sudo tee -a /etc/udev/rules.d/backlight.rules
+#Intel
+sudo pacman -S vulkan-intel lib32-vulkan-intel mesa lib32-mesa lib32-glibc lib32-giflib lib32-libpulse \
+ lib32-libxcomposite lib32-libxrandr \
+ lib32-alsa-plugins lib32-alsa-lib --noconfirm
 echo "48"
 echo "#Creating desktop icon"
 curl -L -o "$HOME/Desktop/back.desktop" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/back.desktop"
