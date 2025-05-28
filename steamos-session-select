@@ -1,5 +1,15 @@
 #!/usr/bin/bash
 
+# Espera a que tengas red
+until ping -c1 1.1.1.1 &>/dev/null; do
+  echo "Esperando conexión a Internet..."
+  sleep 1
+done
+
+# Una vez conectado, actualiza
+echo "Conexión detectada. Iniciando actualización..."
+
+
 sddmConf="/etc/sddm.conf.d/kde_settings.conf"
 
 if [ "$1" == "plasma" ]; then
