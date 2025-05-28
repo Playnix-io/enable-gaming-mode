@@ -7,7 +7,7 @@
     echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" | sudo tee -a /etc/pacman.conf
 
     #Update system
-    sudo pacman -Syu --noconfirm
+    #sudo pacman -Syu --noconfirm
 
     #Dependencies
     sudo pacman -S steam mangohud gamescope bluez bluez-utils --noconfirm
