@@ -24,7 +24,7 @@ if [ "$1" == "plasma" ] || [ "$1" == "desktop" ]; then
         echo "SDDM config file could not be found at $CONFIG_FILE."
         exit 1
     fi
-    NEW_SESSION='plasma' # For other desktops, change here.
+    NEW_SESSION="plasma" # For other desktops, change here.
     sudo sed -i "s/^Session=.*/Session=${NEW_SESSION}/" "$CONFIG_FILE"
     steam -shutdown
 
