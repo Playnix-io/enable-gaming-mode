@@ -21,7 +21,7 @@ echo "ALL ALL=(ALL) NOPASSWD: /usr/bin/sed -i s/^Session=*/Session=*/ ${sddmConf
 sudo chmod 440 $sudoers_file
 echo "32"
 echo "#Installing dependences"
-sudo pacman -S mangohud gamescope bluez bluez-utils --noconfirm
+sudo pacman -S mangohud gamescope bluez bluez-utils inputplumber --noconfirm
 echo "40"
 echo "#Applying fixes"
 sudo usermod -a -G video playnix
@@ -63,7 +63,13 @@ sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/e
 sudo curl -L -o /etc/systemd/system/auto-update.service "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/auto-update.service"
 sudo curl -L -o /etc/systemd/system/auto-update.timer "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/auto-update.timer"
 sudo systemctl enable --now auto-update.timer
+
+rm -rf "$HOME/Desktop/enable-gaming.desktop"
+
 echo "100"
+
+steamos-session-select gamescope
+
 ) |
 zenity --progress \
   --title="Enabling Gaming Mode" \
