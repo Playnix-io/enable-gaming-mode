@@ -19,7 +19,7 @@
     yay -S gamescope-session-steam-git --noconfirm --sudoloop
 
     #Autologin sddm
-    sudo sed -i "s/^Relogin=false/Relogin=true/; s/^User=.*/User=$(whoami)/" "/usr/lib/sddm/sddm.conf.d/default.conf"
+    sudo sed -i "s/^Relogin=false/Relogin=true/; s/^User=.*/User=playnix/" "/usr/lib/sddm/sddm.conf.d/default.conf"
 
     #Session changer
     sudo curl -L -o "/usr/bin/steamos-session-select" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/steamos-session-select"
@@ -44,7 +44,6 @@
     #Powerbutton fix
     git clone https://github.com/ShadowBlip/steam-powerbuttond.git
     cd steam-powerbuttond
-    chmod +x install.sh
     bash install.sh
     cd ..
     rm -rf steam-powerbuttond
@@ -70,17 +69,20 @@
 
     #Waiting for steam config vdf
     while [ ! -f "$HOME/.steam/steam/config/config.vdf" ]; do
-        echo "Waiting for Steam Config..."
+        echo "Waiting for Steam Config file to be created..."
         sleep 1
     done
     kill -15 $(pidof steam)
 
-    #Login Fix
-    registry="$HOME/.steam/registry.vdf"
-    curl -L -o $registry "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/registry.vdf"
+    #OOBE Login Fix
+    curl -L -o "$HOME/.steam/registry.vdf" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/registry.vdf"
 
-    #Pacman "safe" mirror
+    #Pacman playnix safe mirror
+    #sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
+    #sudo curl -L -o /etc/systemd/system/auto-update.service "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/auto-update.service"
+    #sudo curl -L -o /etc/systemd/system/auto-update.timer "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/auto-update.timer"
 
+    #sudo systemctl enable --now auto-update.timer
 
 ) |
 zenity --progress \
