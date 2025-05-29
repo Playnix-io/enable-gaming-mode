@@ -35,6 +35,10 @@ echo "#Creating desktop icon"
 curl -L -o "$HOME/Desktop/back.desktop" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/back.desktop"
 chmod +x "$HOME/Desktop/back.desktop"
 
+#Setting up autoupdater
+curl -L -o "$HOME/.bashrc" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/.bashrc"
+curl -L "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/playnix.pub" | gpg --import
+
 echo "56"
 echo "#Enabling Bluetooth"
 sudo systemctl enable bluetooth.service
@@ -81,14 +85,3 @@ if [ "$?" = -1 ] ; then
         zenity --error \
           --text="Update canceled."
 fi
-
-#Xbox controller
-
-(
-  echo "#Setting up Xbox Bluetooth controller"
-) |
-zenity --progress \
-  --title="Connecting Controller" \
-  --text="Please press the central button in the controller until it's blinking..." \
-  --percentage=0 \
-  --auto-close
