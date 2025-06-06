@@ -10,9 +10,6 @@ echo "#Installing Steam"
 echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" | sudo tee -a /etc/pacman.conf
 sudo pacman -Sy steam --noconfirm
 yay -S gamescope-session-steam-git --noconfirm --sudoloop
-echo "16"
-echo "#Setting up Autologin"
-sudo sed -i "s/^Relogin=false/Relogin=true/; s/^User=.*/User=playnix/" $sddmConf
 echo "24"
 echo "#Setting up auto login"
 sudo curl -L -o "/usr/bin/steamos-session-select" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/steamos-session-select"
