@@ -9,6 +9,9 @@ echo "8"
 echo "#Installing Steam"
 echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" | sudo tee -a /etc/pacman.conf
 sudo pacman -Sy steam --noconfirm
+
+sudo pacman -S nano curl git get base-devel firefox plymouth gwenview fuse --noconfirm
+
 yay -S gamescope-session-steam-git --noconfirm --sudoloop
 echo "24"
 echo "#Setting up auto login"
