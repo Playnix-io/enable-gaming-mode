@@ -1,7 +1,13 @@
 #!/bin/bash
 (
 
-sddmConf="/etc/sddm.conf.d/kde_settings.conf"
+sddmConf="/usr/lib/sddm/sddm.conf.d/default.conf"
+
+if [ -f /etc/sddm.conf.d/kde_settings.conf ]; then
+    sddmConf="/etc/sddm.conf.d/kde_settings.conf"
+fi
+
+
 sudoers_file="/etc/sudoers.d/sddm_config_edit"
 
 echo "playnix" | sudo -S pwd
@@ -10,7 +16,7 @@ echo "#Installing Steam"
 echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" | sudo tee -a /etc/pacman.conf
 sudo pacman -Sy steam --noconfirm
 
-sudo pacman -S nano curl git get base-devel firefox plymouth gwenview fuse --noconfirm
+sudo pacman -S nano curl git wget base-devel firefox plymouth gwenview fuse --noconfirm
 
 yay -S gamescope-session-steam-git --noconfirm --sudoloop
 echo "24"
