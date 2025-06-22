@@ -7,10 +7,8 @@ if [ -f /etc/sddm.conf.d/kde_settings.conf ]; then
     sddmConf="/etc/sddm.conf.d/kde_settings.conf"
 fi
 
-
 sudoers_file="/etc/sudoers.d/sddm_config_edit"
 
-echo "playnix" | sudo -S pwd
 echo "8"
 echo "#Installing Steam"
 echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" | sudo tee -a /etc/pacman.conf

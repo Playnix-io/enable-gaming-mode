@@ -6,6 +6,8 @@ if [ -f /etc/sddm.conf.d/kde_settings.conf ]; then
     sddmConf="/etc/sddm.conf.d/kde_settings.conf"
 fi
 
+pacman -S steam --noconfirm
+
 if [ "$1" == "plasma" ]; then
     NEW_SESSION="plasma" # For other desktops, change here.
     sudo sed -i "s/^Session=.*/Session=plasma/" "$sddmConf"
