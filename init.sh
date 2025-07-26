@@ -11,6 +11,7 @@ sudoers_file="/etc/sudoers.d/sddm_config_edit"
 
 echo "8"
 echo "#Installing Steam"
+sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
 echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" | sudo tee -a /etc/pacman.conf
 sudo pacman -Sy steam --noconfirm
 
@@ -69,7 +70,6 @@ sudo cp -r ./plymouth-theme-steamos/* /usr/share/plymouth/themes/steamos/ && rm 
 sudo plymouth-set-default-theme -R steamos
 echo "88"
 echo "#Setting Playnix update channel"
-sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
 sudo curl -L -o /etc/systemd/system/auto-update.service "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/auto-update.service"
 sudo curl -L -o /etc/systemd/system/auto-update.timer "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/auto-update.timer"
 sudo systemctl enable --now auto-update.timer
