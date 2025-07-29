@@ -1,11 +1,10 @@
 #!/bin/bash
 (
 
-sddmConf="/usr/lib/sddm/sddm.conf.d/default.conf"
+echo "playnix" | sudo -S pwd
+echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/pacman" | sudo tee -a /etc/sudoers.d/99-pacman-nopasswd
 
-if [ -f /etc/sddm.conf.d/kde_settings.conf ]; then
-    sddmConf="/etc/sddm.conf.d/kde_settings.conf"
-fi
+sddmConf="/usr/lib/sddm/sddm.conf.d/default.conf"
 
 sudoers_file="/etc/sudoers.d/sddm_config_edit"
 
