@@ -71,10 +71,10 @@ sudo mkdir -p /usr/share/plymouth/themes/steamos
 sudo cp -r ./plymouth-theme-steamos/* /usr/share/plymouth/themes/steamos/ && rm -rf plymouth-theme-steamos
 sudo plymouth-set-default-theme -R steamos
 echo "88"
-echo "#Setting Playnix update channel"
-sudo curl -L -o /etc/systemd/system/auto-update.service "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/auto-update.service"
-sudo curl -L -o /etc/systemd/system/auto-update.timer "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/auto-update.timer"
-sudo systemctl enable --now auto-update.timer
+# echo "#Setting Playnix update channel"
+# sudo curl -L -o /etc/systemd/system/auto-update.service "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/auto-update.service"
+# sudo curl -L -o /etc/systemd/system/auto-update.timer "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/auto-update.timer"
+# sudo systemctl enable --now auto-update.timer
 
 rm -rf "$HOME/Desktop/enable-gaming.desktop"
 
