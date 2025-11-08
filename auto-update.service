@@ -3,5 +3,4 @@ Description=Autoupdate
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/pacman -Sy --noconfirm playnix
 ExecStart=/usr/bin/pacman -Su --noconfirm
