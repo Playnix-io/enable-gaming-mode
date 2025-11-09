@@ -45,8 +45,8 @@ curl -L -o "$HOME/Desktop/back.desktop" "https://raw.githubusercontent.com/Playn
 chmod +x "$HOME/Desktop/back.desktop"
 
 #Setting up autoupdater
-curl -L -o "$HOME/.bashrc" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/.bashrc"
-curl -L "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/playnix.pub" | gpg --import
+#curl -L -o "$HOME/.bashrc" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/.bashrc"
+#curl -L "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/playnix.pub" | gpg --import
 
 echo "56"
 echo "#Enabling Bluetooth"
@@ -62,8 +62,8 @@ bash install.sh
 cd ..
 rm -rf steam-powerbuttond
 echo "72"
-echo "#Installing Decky"
-curl -L https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/install_release.sh | sh
+#echo "#Installing Decky"
+#sh -c 'rm -f /tmp/user_install_script.sh; if curl -S -s -L -O --output-dir /tmp/ --connect-timeout 60 https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/user_install_script.sh; then bash /tmp/user_install_script.sh; else echo "Something went wrong, please report this if it is a bug"; read; fi'
 echo "80"
 echo "#Setting Plymouth Theme"
 git clone https://github.com/arvigeus/plymouth-theme-steamos
@@ -71,12 +71,16 @@ sudo mkdir -p /usr/share/plymouth/themes/steamos
 sudo cp -r ./plymouth-theme-steamos/* /usr/share/plymouth/themes/steamos/ && rm -rf plymouth-theme-steamos
 sudo plymouth-set-default-theme -R steamos
 echo "88"
-# echo "#Setting Playnix update channel"
-# sudo curl -L -o /etc/systemd/system/auto-update.service "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/auto-update.service"
-# sudo curl -L -o /etc/systemd/system/auto-update.timer "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/auto-update.timer"
-# sudo systemctl enable --now auto-update.timer
+echo "#Setting Playnix auto update channel"
+sudo curl -L -o /usr/local/bin/boot-custom-actions.sh "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/boot-custom-actions.sh"
+sudo curl -L -o /etc/systemd/system/boot-custom-actions.service "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/boot-custom-actions.service"
+sudo chmod +x /usr/local/bin/boot-custom-actions.sh
+#sudo systemctl enable boot-custom-actions.service
 
 rm -rf "$HOME/Desktop/enable-gaming.desktop"
+#Creates random UUID
+CONTENT_ID="$(( RANDOM * RANDOM ))"
+echo $CONTENT_ID > "/home/playnix/.uuid"
 
 echo "100"
 

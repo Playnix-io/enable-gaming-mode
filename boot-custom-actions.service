@@ -1,0 +1,16 @@
+[Unit]
+Description=Boot custom actions
+Before=display-manager.service
+After=network-online.target
+Wants=network-online.target
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pre-gaming-update.sh
+RemainAfterExit=yes
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+RequiredBy=display-manager.service

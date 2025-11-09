@@ -1,6 +1,0 @@
-[Unit]
-Description=Autoupdate
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/pacman -Su --noconfirm
