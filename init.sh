@@ -19,7 +19,7 @@ sudoers_file="/etc/sudoers.d/sddm_config_edit"
 
 #Missing fonts. To do - Move them to playnix pacman repo
 sudo pacman -S noto-fonts noto-fonts-cjk noto-fonts-emoji parted --noconfirm
-
+echo "playnix" | sudo -S pwd
 echo "8"
 echo "#Installing Steam"
 sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
@@ -31,6 +31,7 @@ sudo pacman -S nano curl git wget base-devel firefox plymouth gwenview fuse --no
 git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
 
 yay -S gamescope-session-steam-git --noconfirm --sudoloop
+echo "playnix" | sudo -S pwd
 echo "24"
 echo "#Setting up auto login"
 sudo curl -L -o "/usr/bin/steamos-session-select" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/steamos-session-select"
@@ -48,6 +49,7 @@ echo 'ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video $sys$devpath
 sudo pacman -S vulkan-intel lib32-vulkan-intel mesa lib32-mesa lib32-glibc lib32-giflib lib32-libpulse \
  lib32-libxcomposite lib32-libxrandr \
  lib32-alsa-plugins lib32-alsa-lib --noconfirm
+echo "playnix" | sudo -S pwd
 echo "48"
 echo "#Creating desktop icon"
 curl -L -o "$HOME/Desktop/back.desktop" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/back.desktop"
@@ -68,6 +70,7 @@ sudo cp /etc/systemd/logind.conf /etc/systemd/logind.conf.bak
 sudo curl -L -o /etc/systemd/logind.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/logind.conf"
 
 echo "72"
+echo "playnix" | sudo -S pwd
 #echo "#Installing Decky"
 #sh -c 'rm -f /tmp/user_install_script.sh; if curl -S -s -L -O --output-dir /tmp/ --connect-timeout 60 https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/user_install_script.sh; then bash /tmp/user_install_script.sh; else echo "Something went wrong, please report this if it is a bug"; read; fi'
 echo "80"
@@ -91,6 +94,23 @@ CONTENT_ID="$(( RANDOM * RANDOM ))"
 echo $CONTENT_ID > "/home/playnix/.uuid"
 echo $CONTENT_ID | sudo tee -a /etc/.uuid
 
+cat << EOF | sudo tee /etc/os-release > /dev/null
+NAME="Playnix OS"
+PRETTY_NAME="Playnix OS Gaming Edition"
+ID=playnix
+ID_LIKE=arch
+BUILD_ID=rolling
+ANSI_COLOR="38;2;23;147;209"
+HOME_URL="https://playnix.io/"
+DOCUMENTATION_URL="https://manual.playnix.io"
+SUPPORT_URL="https://manual.playnix.io"
+BUG_REPORT_URL="https://manual.playnix.io"
+LOGO=playnix
+VERSION_CODENAME="Playnix OS"
+VERSION_ID=1.0
+VARIANT="Playnix OS"
+VARIANT_ID=${CONTENT_ID}
+EOF
 
 echo "100"
 
