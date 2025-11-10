@@ -19,7 +19,7 @@ add_nvme2(){
     echo ">>> Checking if $DEV exists..."
     if [[ ! -b "$DEV" ]]; then
       echo "ERROR: $DEV does not exist or is not a block device."  >> "$LOG_FILE"
-      exit 1
+      return 1
     else
       echo "SUCESS: $DEV exist, continue."  >> "$LOG_FILE"
     fi
@@ -32,7 +32,7 @@ add_nvme2(){
     if [[ -z "$FSTYPE" || -z "$UUID" ]]; then
       echo "ERROR: Could not detect filesystem type or UUID for $DEV."  >> "$LOG_FILE"
       echo "Make sure the partition is formatted."  >> "$LOG_FILE"
-      exit 1
+      return 1
     fi
 
     echo "  - FSTYPE: $FSTYPE"  >> "$LOG_FILE"
@@ -41,7 +41,7 @@ add_nvme2(){
     echo ">>> Checking if $UUID or $MOUNT_POINT already exists in fstab..." >> "$LOG_FILE"
     if grep -qE "UUID=${UUID}|[[:space:]]${MOUNT_POINT}[[:space:]]" "$FSTAB"; then
       echo "✓ Disk already present in $FSTAB. Skipping mount and setup." >> "$LOG_FILE"
-      exit 0
+      return 0
     fi
 
     echo ">>> Creating mount point: $MOUNT_POINT" >> "$LOG_FILE"
@@ -89,7 +89,7 @@ add_nvme2_library(){
 
     if [[ ! -d "${BASE_MOUNT}" ]]; then
       echo "ERROR: ${BASE_MOUNT} doesn't exist" >> "$LOG_FILE"
-      exit 1
+      return 1
     fi
 
     echo ">>> Creating new SteamLibrary..." >> "$LOG_FILE"
@@ -123,14 +123,14 @@ fi
     # Ensure Steam is not running
     if pgrep -x steam >/dev/null; then
       echo "✗ Steam is running. Please close it before continuing." >> "$LOG_FILE"
-      exit 1
+      return 1
     fi
 
     # Check existing file
     if [[ ! -f "$STEAM_CONFIG" ]]; then
       echo "✗ Cannot find $STEAM_CONFIG"
       echo "Make sure Steam has been started at least once." >> "$LOG_FILE"
-      exit 1
+      return 1
     fi
 
     # Backup
@@ -140,7 +140,7 @@ fi
     # If already present, skip
     if grep -Fq "$NEW_LIBRARY" "$STEAM_CONFIG"; then
       echo "✓ Library path already present: $NEW_LIBRARY" >> "$LOG_FILE"
-      exit 0
+      return 0
     fi
 
     # Detect highest numeric key
@@ -211,7 +211,7 @@ if ping -c 1 -W 2 1.1.1.1 &> /dev/null; then
 
     if [ ! -f /tmp/remote-boot-custom-actions.sh ] || [ ! -f /tmp/remote-boot-custom-actions.sh.asc ]; then
         echo "✗ Failed to download script or signature: $(date)" >> "$LOG_FILE"
-        exit 1
+        return 1
     fi
 
     echo "Verifying GPG signature..." >> "$LOG_FILE"
