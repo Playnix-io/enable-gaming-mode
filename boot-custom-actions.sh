@@ -1,7 +1,7 @@
 #!/bin/bash
 LOG_FILE="/home/playnix/boot-custom-actions.log"
 
-echo "=== Boot Custom Actions started: $(date) ===" >> "$LOG_FILE"
+echo "=== Boot Custom Actions started: $(date) ===" > "$LOG_FILE"
 
 if ping -c 1 -W 5 1.1.1.1 &> /dev/null; then
     echo "Internet found, executing remote script..." >> "$LOG_FILE"
