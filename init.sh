@@ -78,7 +78,7 @@ echo "#Setting Playnix auto update channel"
 sudo curl -L -o /usr/local/bin/boot-custom-actions.sh "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/boot-custom-actions.sh"
 sudo curl -L -o /etc/systemd/system/boot-custom-actions.service "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/boot-custom-actions.service"
 sudo chmod +x /usr/local/bin/boot-custom-actions.sh
-#sudo systemctl enable boot-custom-actions.service
+sudo systemctl enable boot-custom-actions.service
 
 rm -rf "$HOME/Desktop/enable-gaming.desktop"
 #Creates random UUID
