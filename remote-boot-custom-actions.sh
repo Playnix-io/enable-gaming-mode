@@ -60,7 +60,7 @@ add_nvme2(){
     echo ">>> Checking if $UUID or $MOUNT_POINT already exists in fstab..." >> "$LOG_FILE"
     if grep -qE "UUID=${UUID}|[[:space:]]${MOUNT_POINT}[[:space:]]" "$FSTAB"; then
       echo "✓ Disk already present in $FSTAB. Skipping mount and setup." >> "$LOG_FILE"
-      return 0
+      exit 0
     fi
 
     echo ">>> Creating mount point: $MOUNT_POINT" >> "$LOG_FILE"
