@@ -1,11 +1,17 @@
 #!/bin/bash
 UUID=$(cat "/etc/.uuid")
+UUID_HASH=$(echo "$UUID" | md5sum | tr -d 'a-f' | cut -c1-8)
+UUID_NUM=$((16#$UUID_HASH))
+ROLLOUT_PERCENTAGE=$((UUID_NUM % 100))
+ROLLOUT_TARGET=5  # % will get this update
 LOG_FILE="/tmp/boot-custom-actions.log"
 
 echo "Remote code! --- $(date +%s) ---" >> $LOG_FILE
 
+#if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
 if [[ "${UUID:-}" == "testbed" ]]; then
 
+    echo "✓ UUID in rollout group (${ROLLOUT_PERCENTAGE}% < ${ROLLOUT_TARGET}%)"
     echo "BEGIN REMOTE CODE --- $(date +%s) ---" >> "$LOG_FILE"
 
     #Pacman update
