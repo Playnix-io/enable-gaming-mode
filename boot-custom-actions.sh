@@ -1,23 +1,32 @@
 #!/bin/bash
 LOG_FILE="/tmp/boot-custom-actions.log"
+MAX_RETRIES=10
+RETRY_DELAY=1
 
-echo "=== Boot Custom Actions started: $(date) ===" > "$LOG_FILE"
+echo "=== Boot Custom Actions started as $(whoami): $(date) ===" > "$LOG_FILE"
 
-if ping -c 1 -W 5 1.1.1.1 &> /dev/null; then
-    echo "Internet found, executing remote script..." >> "$LOG_FILE"
+echo "Waiting for internet..." >> "$LOG_FILE"
+RETRIES=0
 
-
-    curl -sL -H "Cache-Control: no-cache" -H "Pragma: no-cache" \
-      "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/remote-boot-custom-actions.sh" | bash >> "$LOG_FILE" 2>&1
-    EXIT_CODE=$?
-
-    if [ $EXIT_CODE -eq 0 ]; then
-        echo "✓ Remote code completed: $(date)" >> "$LOG_FILE"
-    else
-        echo "✗ Remote code failed (exit code: $EXIT_CODE): $(date)" >> "$LOG_FILE"
+while [ $RETRIES -lt $MAX_RETRIES ]; do
+    if ping -c 1 -W 2 1.1.1.1 &> /dev/null; then
+        echo "✓ Internet OK after $RETRIES attempts" >> "$LOG_FILE"
+        break
     fi
+
+    RETRIES=$((RETRIES + 1))
+    sleep $RETRY_DELAY
+done
+
+if ping -c 1 -W 2 1.1.1.1 &> /dev/null; then
+    echo "Executing remote script..." >> "$LOG_FILE"
+
+    SCRIPT_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/remote-boot-custom-actions.sh?t=$(date +%s)"
+    curl -sL "$SCRIPT_URL" | bash >> "$LOG_FILE" 2>&1
+
+    echo "✓ Done: $(date)" >> "$LOG_FILE"
 else
-    echo "✗ No internet: $(date)" >> "$LOG_FILE"
+    echo "✗ No internet after ${MAX_RETRIES} attempts: $(date)" >> "$LOG_FILE"
 fi
 
 echo "=== END ===" >> "$LOG_FILE"

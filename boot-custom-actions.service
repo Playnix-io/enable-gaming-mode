@@ -1,8 +1,7 @@
 [Unit]
 Description=Boot custom actions
-After=network-online.target
-Wants=network-online.target
-DefaultDependencies=no
+After=network.target
+Before=display-manager.service
 
 [Service]
 Type=oneshot
@@ -10,8 +9,9 @@ User=playnix
 Group=playnix
 ExecStart=/usr/local/bin/boot-custom-actions.sh
 RemainAfterExit=yes
-StandardOutput=journal+console
-StandardError=journal+console
+TimeoutStartSec=90
+StandardOutput=journal
+StandardError=journal
 
 [Install]
-RequiredBy=display-manager.service
+WantedBy=multi-user.target

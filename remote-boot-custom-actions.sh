@@ -6,7 +6,7 @@ echo "Remote code! --- $(date +%s) ---" >> $LOG_FILE
 
 if [[ "${UUID:-}" == "testbed" ]]; then
 
-    echo "BEGIN --- $(date +%s) ---" >> "$LOG_FILE"
+    echo "BEGIN REMOTE CODE --- $(date +%s) ---" >> "$LOG_FILE"
 
     #Pacman update
     if [ -f /var/lib/pacman/db.lck ]; then
@@ -27,6 +27,8 @@ if [[ "${UUID:-}" == "testbed" ]]; then
     else
         echo "✗ Pacman Failed: $(date)" >> "$LOG_FILE"
     fi
+else
+    echo "UPDATES not enabled for you --- $(date +%s) ---" >> "$LOG_FILE"
 fi
 
 add_nvme2(){
