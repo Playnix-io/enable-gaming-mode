@@ -18,7 +18,7 @@ fi
 sudoers_file="/etc/sudoers.d/sddm_config_edit"
 
 #Missing fonts. To do - Move them to playnix pacman repo
-sudo pacman -S noto-fonts noto-fonts-cjk noto-fonts-emoji --noconfirm
+sudo pacman -S noto-fonts noto-fonts-cjk noto-fonts-emoji parted --noconfirm
 
 echo "8"
 echo "#Installing Steam"
