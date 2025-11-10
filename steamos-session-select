@@ -6,7 +6,7 @@ if [ -f /etc/sddm.conf.d/kde_settings.conf ]; then
 fi
 
 if [ "$1" == "plasma" ]; then
-    NEW_SESSION="plasma" # For other desktops, change here.
+    NEW_SESSION="plasma"
     sudo sed -i "s/^Session=.*/Session=plasma/" "$sddmConf"
     steam -shutdown
 elif [ "$1" == "gamescope" ]; then
