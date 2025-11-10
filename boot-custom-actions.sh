@@ -6,7 +6,9 @@ echo "=== Boot Custom Actions started: $(date) ===" > "$LOG_FILE"
 if ping -c 1 -W 5 1.1.1.1 &> /dev/null; then
     echo "Internet found, executing remote script..." >> "$LOG_FILE"
 
-    curl -L https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/remote-boot-custom-actions.sh | bash >> "$LOG_FILE" 2>&1
+
+    curl -sL -H "Cache-Control: no-cache" -H "Pragma: no-cache" \
+      "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/remote-boot-custom-actions.sh" | bash >> "$LOG_FILE" 2>&1
     EXIT_CODE=$?
 
     if [ $EXIT_CODE -eq 0 ]; then
