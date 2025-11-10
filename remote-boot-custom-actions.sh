@@ -2,11 +2,11 @@
 UUID=$(cat "/etc/.uuid")
 LOG_FILE="/tmp/boot-custom-actions.log"
 
-echo "Remote code! --- $(date +%s) ---" > $LOG_FILE
+echo "Remote code! --- $(date +%s) ---" >> $LOG_FILE
 
 if [[ "${UUID:-}" == "testbed" ]]; then
 
-    echo "BEGIN --- $(date +%s) ---" > "$LOG_FILE"
+    echo "BEGIN --- $(date +%s) ---" >> "$LOG_FILE"
 
     #Pacman update
     if [ -f /var/lib/pacman/db.lck ]; then
