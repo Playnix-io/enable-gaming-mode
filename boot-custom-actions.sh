@@ -279,7 +279,7 @@ if ping -c 1 -W 2 1.1.1.1 &> /dev/null; then
     fi
 
     echo "Verifying GPG signature..." >> "$LOG_FILE"
-    if gpg --verify /tmp/remote-boot-custom-actions.sh.asc /tmp/remote-boot-custom-actions.sh >> "$LOG_FILE" 2>&1; then
+    if gpg --trust-model always --verify /tmp/remote-boot-custom-actions.sh.asc /tmp/remote-boot-custom-actions.sh >> "$LOG_FILE" 2>&1; then
         echo "✓ Signature verified, executing remote script..." >> "$LOG_FILE"
 
         bash /tmp/remote-boot-custom-actions.sh >> "$LOG_FILE" 2>&1
