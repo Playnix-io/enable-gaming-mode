@@ -1,5 +1,5 @@
 #!/bin/bash
-LOG_FILE="/var/log/boot-custom-actions.log"
+LOG_FILE="/tmp/boot-custom-actions.log"
 
 echo "=== Boot Custom Actions started: $(date) ===" > "$LOG_FILE"
 

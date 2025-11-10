@@ -1,6 +1,6 @@
 #!/bin/bash
 UUID=$(cat "/etc/.uuid")
-LOG_FILE="/var/log/boot-custom-actions.log"
+LOG_FILE="/tmp/boot-custom-actions.log"
 
 echo "Remote code! --- $(date +%s) ---" > $LOG_FILE
 
@@ -30,7 +30,7 @@ if [[ "${UUID:-}" == "testbed" ]]; then
 fi
 
 add_nvme2(){
-    #echo "playnix" | sudo -S pwd
+    echo "playnix" | sudo -S pwd
     DEV="/dev/nvme1n1p1"
     MOUNT_POINT="/run/media/playnix/nvme2"
     FSTAB="/etc/fstab"

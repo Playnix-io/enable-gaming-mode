@@ -2,7 +2,9 @@
 (
 
 echo "playnix" | sudo -S pwd
-echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/pacman" | sudo tee -a /etc/sudoers.d/99-pacman-nopasswd
+echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/pacman -Syu --noconfirm" | sudo tee /etc/sudoers.d/99-pacman-nopasswd
+echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/pacman -S * --noconfirm" | sudo tee -a /etc/sudoers.d/99-pacman-nopasswd
+sudo chmod 440 /etc/sudoers.d/99-pacman-nopasswd
 
 sddmConf="/usr/lib/sddm/sddm.conf.d/default.conf"
 if [ -f /etc/sddm.conf.d/kde_settings.conf ]; then
