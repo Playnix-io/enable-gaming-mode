@@ -1,6 +1,9 @@
 #!/bin/bash
 UUID=$(cat "/home/playnix/.uuid")
 LOG_FILE="/home/playnix/boot-custom-actions.log"
+
+echo "Remote code! --- $(date +%s) ---" > "/home/playnix/Desktop/trace.txt"
+
 if [[ "${UUID:-}" == "testbed" ]]; then
 
     echo "BEGIN --- $(date +%s) ---" > "$LOG_FILE"
