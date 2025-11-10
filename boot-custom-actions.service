@@ -6,7 +6,7 @@ DefaultDependencies=no
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/pre-gaming-update.sh
+ExecStart=/usr/local/bin/remote-boot-custom-actions.sh
 RemainAfterExit=yes
 StandardOutput=journal+console
 StandardError=journal+console
