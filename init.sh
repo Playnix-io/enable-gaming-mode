@@ -64,12 +64,12 @@ sudo systemctl start bluetooth.service
 
 echo "64"
 echo "#Setting up Sleep Button"
-git clone https://github.com/ShadowBlip/steam-powerbuttond.git
-cd steam-powerbuttond
-chmod +x install.sh
-bash install.sh
-cd ..
-rm -rf steam-powerbuttond
+# git clone https://github.com/ShadowBlip/steam-powerbuttond.git
+# cd steam-powerbuttond
+# chmod +x install.sh
+# bash install.sh
+# cd ..
+# rm -rf steam-powerbuttond
 echo "72"
 #echo "#Installing Decky"
 #sh -c 'rm -f /tmp/user_install_script.sh; if curl -S -s -L -O --output-dir /tmp/ --connect-timeout 60 https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/user_install_script.sh; then bash /tmp/user_install_script.sh; else echo "Something went wrong, please report this if it is a bug"; read; fi'
