@@ -3,6 +3,12 @@ LOG_FILE="/tmp/boot-custom-actions.log"
 MAX_RETRIES=10
 RETRY_DELAY=1
 
+REMOTE_SCRIPT_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/remote-boot-custom-actions.sh"
+REMOTE_SIG_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/remote-boot-custom-actions.sh.asc"
+GPG_KEY_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/playnix-signing-key.pub"
+GPG_KEY_FINGERPRINT="53BA244384BF21E9"
+
+
 add_nvme2(){
     echo "Checking for 2nd NVME drive..." >> "$LOG_FILE"
     echo "playnix" | sudo -S pwd
@@ -174,6 +180,14 @@ echo "=== Boot Custom Actions started as $(whoami): $(date) ===" > "$LOG_FILE"
 
 add_nvme2
 
+if ! gpg --list-keys "$GPG_KEY_FINGERPRINT" &> /dev/null; then
+    echo "Importing GPG public key..." >> "$LOG_FILE"
+    curl -sL "$GPG_KEY_URL" | gpg --import >> "$LOG_FILE" 2>&1
+
+    # Marcar la clave como confiable
+    echo "$GPG_KEY_FINGERPRINT:6:" | gpg --import-ownertrust >> "$LOG_FILE" 2>&1
+fi
+
 echo "Waiting for internet..." >> "$LOG_FILE"
 RETRIES=0
 
@@ -190,10 +204,36 @@ done
 if ping -c 1 -W 2 1.1.1.1 &> /dev/null; then
     echo "Executing remote script..." >> "$LOG_FILE"
 
-    SCRIPT_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/remote-boot-custom-actions.sh?t=$(date +%s)"
-    curl -sL "$SCRIPT_URL" | bash >> "$LOG_FILE" 2>&1
+    TIMESTAMP=$(date +%s)
 
+    curl --max-time 30 -sL -o /tmp/remote-boot-custom-actions.sh "$REMOTE_SCRIPT_URL?t=$TIMESTAMP" 2>> "$LOG_FILE"
+    curl --max-time 30 -sL -o /tmp/remote-boot-custom-actions.sh.asc "$REMOTE_SIG_URL?t=$TIMESTAMP" 2>> "$LOG_FILE"
+
+    if [ ! -f /tmp/remote-boot-custom-actions.sh ] || [ ! -f /tmp/remote-boot-custom-actions.sh.asc ]; then
+        echo "✗ Failed to download script or signature: $(date)" >> "$LOG_FILE"
+        exit 1
+    fi
+
+    echo "Verifying GPG signature..." >> "$LOG_FILE"
+    if gpg --verify /tmp/remote-boot-custom-actions.sh.asc /tmp/remote-boot-custom-actions.sh >> "$LOG_FILE" 2>&1; then
+        echo "✓ Signature verified, executing remote script..." >> "$LOG_FILE"
+
+        bash /tmp/remote-boot-custom-actions.sh >> "$LOG_FILE" 2>&1
+        EXIT_CODE=$?
+
+        if [ $EXIT_CODE -eq 0 ]; then
+            echo "✓ Remote code completed successfully: $(date)" >> "$LOG_FILE"
+        else
+            echo "✗ Remote code failed (exit code: $EXIT_CODE): $(date)" >> "$LOG_FILE"
+        fi
+    else
+        echo "✗ ❌ SIGNATURE VERIFICATION FAILED! Script NOT executed: $(date)" >> "$LOG_FILE"
+        echo "✗ This could indicate tampering or MITM attack!" >> "$LOG_FILE"
+    fi
+
+    rm -f /tmp/remote-boot-custom-actions.sh /tmp/remote-boot-custom-actions.sh.asc
     echo "✓ Done: $(date)" >> "$LOG_FILE"
+
 else
     echo "✗ No internet after ${MAX_RETRIES} attempts: $(date)" >> "$LOG_FILE"
 fi

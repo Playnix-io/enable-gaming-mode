@@ -6,6 +6,10 @@ echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/pacman -Syu --noconfirm" | sudo tee /
 echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/pacman -S * --noconfirm" | sudo tee -a /etc/sudoers.d/99-pacman-nopasswd
 sudo chmod 440 /etc/sudoers.d/99-pacman-nopasswd
 
+echo "Importing GPG signing key..."
+curl -L "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/playnix-signing-key.pub" | gpg --import
+echo "53BA244384BF21E9:6:" | gpg --import-ownertrust
+
 sddmConf="/usr/lib/sddm/sddm.conf.d/default.conf"
 if [ -f /etc/sddm.conf.d/kde_settings.conf ]; then
     sddmConf="/etc/sddm.conf.d/kde_settings.conf"
