@@ -13,34 +13,97 @@ add_nvme2(){
     echo "Checking for 2nd NVME drive..." >> "$LOG_FILE"
     echo "playnix" | sudo -S pwd
     DEV="/dev/nvme1n1p1"
+    DEV_DISK="/dev/nvme1n1"
     MOUNT_POINT="/run/media/playnix/nvme2"
     FSTAB="/etc/fstab"
 
-    echo ">>> Checking if $DEV exists..."
-    if [[ ! -b "$DEV" ]]; then
-      echo "ERROR: $DEV does not exist or is not a block device."  >> "$LOG_FILE"
+    echo ">>> Checking if $DEV_DISK exists..." >> "$LOG_FILE"
+    if [[ ! -b "$DEV_DISK" ]]; then
+      echo "ERROR: $DEV_DISK does not exist. No 2nd NVME drive found." >> "$LOG_FILE"
       return 1
     else
-      echo "SUCESS: $DEV exist, continue."  >> "$LOG_FILE"
+      echo "SUCCESS: $DEV_DISK exists, continue." >> "$LOG_FILE"
     fi
 
+    if [[ ! -b "$DEV" ]]; then
+      echo "WARNING: Partition $DEV does not exist." >> "$LOG_FILE"
+      echo ">>> Creating partition on $DEV_DISK..." >> "$LOG_FILE"
 
-    echo ">>> Getting filesystem type and UUID..."  >> "$LOG_FILE"
-    FSTYPE=$(lsblk -nrpo FSTYPE "$DEV" | head -n1)
+      echo "Creating GPT partition table..." >> "$LOG_FILE"
+      sudo parted -s "$DEV_DISK" mklabel gpt
+      sudo parted -s "$DEV_DISK" mkpart primary ext4 0% 100%
+
+      sleep 2
+      sudo partprobe "$DEV_DISK"
+      sleep 2
+
+      if [[ ! -b "$DEV" ]]; then
+        echo "ERROR: Failed to create partition $DEV" >> "$LOG_FILE"
+        return 1
+      fi
+      echo "✓ Partition created successfully" >> "$LOG_FILE"
+    fi
+
+    echo ">>> Getting filesystem type..." >> "$LOG_FILE"
+    FSTYPE=$(lsblk -nrpo FSTYPE "$DEV" 2>/dev/null | head -n1)
+
+    NEEDS_FORMAT=false
+
+    if [[ -z "$FSTYPE" ]]; then
+      echo ">>> Disk is not formatted" >> "$LOG_FILE"
+      NEEDS_FORMAT=true
+    elif [[ "$FSTYPE" != "ext4" ]]; then
+      echo ">>> Disk is formatted as $FSTYPE (not ext4)" >> "$LOG_FILE"
+      NEEDS_FORMAT=true
+    else
+      echo ">>> Disk is already formatted as ext4" >> "$LOG_FILE"
+    fi
+
+    if [[ "$NEEDS_FORMAT" == true ]]; then
+      echo ">>> Formatting $DEV as ext4..." >> "$LOG_FILE"
+
+      if mountpoint -q "$MOUNT_POINT" 2>/dev/null; then
+        echo "Unmounting $MOUNT_POINT..." >> "$LOG_FILE"
+        sudo umount "$MOUNT_POINT" 2>/dev/null || true
+      fi
+
+      echo "Running mkfs.ext4 on $DEV..." >> "$LOG_FILE"
+      sudo mkfs.ext4 -F "$DEV" >> "$LOG_FILE" 2>&1
+
+      if [ $? -eq 0 ]; then
+        echo "✓ Successfully formatted $DEV as ext4" >> "$LOG_FILE"
+      else
+        echo "ERROR: Failed to format $DEV" >> "$LOG_FILE"
+        return 1
+      fi
+
+      FSTYPE="ext4"
+
+      sleep 2
+    fi
+
+    echo ">>> Getting UUID..." >> "$LOG_FILE"
     UUID=$(lsblk -nrpo UUID "$DEV" | head -n1)
 
-    if [[ -z "$FSTYPE" || -z "$UUID" ]]; then
-      echo "ERROR: Could not detect filesystem type or UUID for $DEV."  >> "$LOG_FILE"
-      echo "Make sure the partition is formatted."  >> "$LOG_FILE"
+    if [[ -z "$UUID" ]]; then
+      echo "ERROR: Could not detect UUID for $DEV." >> "$LOG_FILE"
       return 1
     fi
 
-    echo "  - FSTYPE: $FSTYPE"  >> "$LOG_FILE"
+    echo "  - FSTYPE: $FSTYPE" >> "$LOG_FILE"
     echo "  - UUID:   $UUID" >> "$LOG_FILE"
 
     echo ">>> Checking if $UUID or $MOUNT_POINT already exists in fstab..." >> "$LOG_FILE"
     if grep -qE "UUID=${UUID}|[[:space:]]${MOUNT_POINT}[[:space:]]" "$FSTAB"; then
-      echo "✓ Disk already present in $FSTAB. Skipping mount and setup." >> "$LOG_FILE"
+      echo "✓ Disk already present in $FSTAB. Skipping." >> "$LOG_FILE"
+
+      # Asegurarse de que está montado
+      if ! mountpoint -q "$MOUNT_POINT" 2>/dev/null; then
+        echo ">>> Mounting existing entry..." >> "$LOG_FILE"
+        sudo mkdir -p "$MOUNT_POINT"
+        sudo mount "$MOUNT_POINT"
+      fi
+
       return 0
     fi
 
@@ -53,29 +116,30 @@ add_nvme2(){
     echo ">>> Backing up $FSTAB to ${FSTAB}.bak" >> "$LOG_FILE"
     sudo cp "$FSTAB" "${FSTAB}.bak"
 
-    echo ">>> Checking if entry already exists in fstab..." >> "$LOG_FILE"
-    if grep -qE "UUID=${UUID}|[[:space:]]${MOUNT_POINT}[[:space:]]" "$FSTAB"; then
-      echo "An entry for this UUID or mount point already exists in $FSTAB." >> "$LOG_FILE"
-      echo "Not adding a duplicate line. Current matching lines:" >> "$LOG_FILE"
-      grep -nE "UUID=${UUID}|[[:space:]]${MOUNT_POINT}[[:space:]]" "$FSTAB" || true
+    echo ">>> Adding new fstab entry:" >> "$LOG_FILE"
+    echo "$FSTAB_LINE" >> "$LOG_FILE"
+    echo "$FSTAB_LINE" | sudo tee -a "$FSTAB" > /dev/null
+
+    echo ">>> Mounting $MOUNT_POINT..." >> "$LOG_FILE"
+    sudo mount "$MOUNT_POINT"
+
+    if [ $? -eq 0 ]; then
+      echo "✓ Successfully mounted $MOUNT_POINT" >> "$LOG_FILE"
     else
-      echo "Adding new fstab entry:" >> "$LOG_FILE"
-      echo "$FSTAB_LINE" >> "$LOG_FILE"
-      echo -e "$FSTAB_LINE" | sudo tee -a $FSTAB
+      echo "ERROR: Failed to mount $MOUNT_POINT" >> "$LOG_FILE"
+      return 1
     fi
 
-    echo ">>> Mounting $MOUNT_POINT using fstab..." >> "$LOG_FILE"
-    sudo mount "$MOUNT_POINT"
+    echo ">>> Setting ownership..." >> "$LOG_FILE"
+    sudo chown -R "playnix:playnix" "$MOUNT_POINT"
+
+    echo ">>> Reloading systemd..." >> "$LOG_FILE"
+    sudo systemctl daemon-reload
 
     echo ">>> Done!" >> "$LOG_FILE"
     echo "$DEV is now mounted on $MOUNT_POINT and will auto-mount on boot." >> "$LOG_FILE"
 
-
-    chown -R "${USER_NAME}:${USER_NAME}" "${BASE_MOUNT}"
-    sudo systemctl daemon-reload
-
     add_nvme2_library
-
 }
 
 add_nvme2_library(){
