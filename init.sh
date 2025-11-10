@@ -86,6 +86,8 @@ rm -rf "$HOME/Desktop/enable-gaming.desktop"
 #Creates random UUID
 CONTENT_ID="$(( RANDOM * RANDOM ))"
 echo $CONTENT_ID > "/home/playnix/.uuid"
+echo $CONTENT_ID | sudo tee -a /etc/.uuid
+
 
 echo "100"
 
