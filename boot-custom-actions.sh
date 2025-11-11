@@ -25,48 +25,101 @@ add_nvme2(){
       echo "SUCCESS: $DEV_DISK exists, continue." >> "$LOG_FILE"
     fi
 
-    if [[ ! -b "$DEV" ]]; then
-      echo "WARNING: Partition $DEV does not exist." >> "$LOG_FILE"
-      echo ">>> Creating partition on $DEV_DISK..." >> "$LOG_FILE"
+    # Verificar si existe alguna partición en el disco
+    EXISTING_PARTITIONS=$(lsblk -nrpo NAME "$DEV_DISK" | grep -v "^${DEV_DISK}$" | wc -l)
 
-      echo "Creating GPT partition table..." >> "$LOG_FILE"
-      sudo parted -s "$DEV_DISK" mklabel gpt
-      sudo parted -s "$DEV_DISK" mkpart primary ext4 0% 100%
+    if [[ $EXISTING_PARTITIONS -gt 0 ]]; then
+      echo ">>> Found $EXISTING_PARTITIONS existing partition(s)" >> "$LOG_FILE"
 
-      sleep 2
+      # Verificar si la primera partición es ext4
+      if [[ -b "$DEV" ]]; then
+        FSTYPE=$(lsblk -nrpo FSTYPE "$DEV" 2>/dev/null | head -n1)
+
+        # Si hay más de 1 partición O no es ext4, reformatear todo
+        if [[ $EXISTING_PARTITIONS -gt 1 ]] || [[ "$FSTYPE" != "ext4" ]]; then
+          echo ">>> Disk needs repartitioning (multiple partitions or wrong format)" >> "$LOG_FILE"
+          echo ">>> Current format: ${FSTYPE:-none}, Partitions: $EXISTING_PARTITIONS" >> "$LOG_FILE"
+
+          # Desmontar todas las particiones del disco
+          echo ">>> Unmounting all partitions..." >> "$LOG_FILE"
+          for part in $(lsblk -nrpo NAME "$DEV_DISK" | grep -v "^${DEV_DISK}$"); do
+            sudo umount "$part" 2>/dev/null || true
+          done
+
+          # Eliminar todas las particiones y crear nueva tabla GPT
+          echo ">>> Wiping disk and creating new partition table..." >> "$LOG_FILE"
+          sudo wipefs -a "$DEV_DISK" >> "$LOG_FILE" 2>&1
+
+          # Crear nueva tabla de particiones GPT
+          sudo parted -s "$DEV_DISK" mklabel gpt >> "$LOG_FILE" 2>&1
+
+          # Crear nueva partición que ocupe TODO el disco
+          echo ">>> Creating new partition spanning entire disk..." >> "$LOG_FILE"
+          sudo parted -s "$DEV_DISK" mkpart primary ext4 0% 100% >> "$LOG_FILE" 2>&1
+
+          # Informar al kernel
+          sudo partprobe "$DEV_DISK"
+          sleep 3
+
+          if [[ ! -b "$DEV" ]]; then
+            echo "ERROR: Failed to create partition $DEV" >> "$LOG_FILE"
+            return 1
+          fi
+          echo "✓ New partition created successfully" >> "$LOG_FILE"
+
+          # Marcar que necesita formateo
+          NEEDS_FORMAT=true
+        else
+          echo ">>> Single ext4 partition found" >> "$LOG_FILE"
+          NEEDS_FORMAT=false
+        fi
+      else
+        # No existe /dev/nvme1n1p1 pero hay particiones, reformatear
+        echo ">>> Unexpected partition layout, reformatting..." >> "$LOG_FILE"
+
+        # Desmontar todo
+        for part in $(lsblk -nrpo NAME "$DEV_DISK" | grep -v "^${DEV_DISK}$"); do
+          sudo umount "$part" 2>/dev/null || true
+        done
+
+        sudo wipefs -a "$DEV_DISK" >> "$LOG_FILE" 2>&1
+        sudo parted -s "$DEV_DISK" mklabel gpt >> "$LOG_FILE" 2>&1
+        sudo parted -s "$DEV_DISK" mkpart primary ext4 0% 100% >> "$LOG_FILE" 2>&1
+        sudo partprobe "$DEV_DISK"
+        sleep 3
+
+        if [[ ! -b "$DEV" ]]; then
+          echo "ERROR: Failed to create partition $DEV" >> "$LOG_FILE"
+          return 1
+        fi
+
+        NEEDS_FORMAT=true
+      fi
+    else
+      # No hay particiones, crear desde cero
+      echo ">>> No partitions found, creating new partition table..." >> "$LOG_FILE"
+      sudo wipefs -a "$DEV_DISK" >> "$LOG_FILE" 2>&1
+      sudo parted -s "$DEV_DISK" mklabel gpt >> "$LOG_FILE" 2>&1
+      sudo parted -s "$DEV_DISK" mkpart primary ext4 0% 100% >> "$LOG_FILE" 2>&1
       sudo partprobe "$DEV_DISK"
-      sleep 2
+      sleep 3
 
       if [[ ! -b "$DEV" ]]; then
         echo "ERROR: Failed to create partition $DEV" >> "$LOG_FILE"
         return 1
       fi
       echo "✓ Partition created successfully" >> "$LOG_FILE"
+      NEEDS_FORMAT=true
     fi
 
-    echo ">>> Getting filesystem type..." >> "$LOG_FILE"
-    FSTYPE=$(lsblk -nrpo FSTYPE "$DEV" 2>/dev/null | head -n1)
-
-    NEEDS_FORMAT=false
-
-    if [[ -z "$FSTYPE" ]]; then
-      echo ">>> Disk is not formatted" >> "$LOG_FILE"
-      NEEDS_FORMAT=true
-    elif [[ "$FSTYPE" != "ext4" ]]; then
-      echo ">>> Disk is formatted as $FSTYPE (not ext4)" >> "$LOG_FILE"
-      NEEDS_FORMAT=true
-    else
-      echo ">>> Disk is already formatted as ext4" >> "$LOG_FILE"
-    fi
-
+    # Formatear si es necesario
     if [[ "$NEEDS_FORMAT" == true ]]; then
       echo ">>> Formatting $DEV as ext4..." >> "$LOG_FILE"
 
-      if mountpoint -q "$MOUNT_POINT" 2>/dev/null; then
-        echo "Unmounting $MOUNT_POINT..." >> "$LOG_FILE"
-        sudo umount "$MOUNT_POINT" 2>/dev/null || true
-      fi
+      # Asegurar que está desmontado
+      sudo umount "$DEV" 2>/dev/null || true
 
+      # Formatear como ext4
       echo "Running mkfs.ext4 on $DEV..." >> "$LOG_FILE"
       sudo mkfs.ext4 -F "$DEV" >> "$LOG_FILE" 2>&1
 
@@ -76,8 +129,6 @@ add_nvme2(){
         echo "ERROR: Failed to format $DEV" >> "$LOG_FILE"
         return 1
       fi
-
-      FSTYPE="ext4"
 
       sleep 2
     fi
@@ -90,14 +141,20 @@ add_nvme2(){
       return 1
     fi
 
+    FSTYPE="ext4"
     echo "  - FSTYPE: $FSTYPE" >> "$LOG_FILE"
     echo "  - UUID:   $UUID" >> "$LOG_FILE"
+
+    # Verificar tamaño final
+    DISK_SIZE=$(lsblk -nrpo SIZE "$DEV_DISK" | head -n1)
+    PART_SIZE=$(lsblk -nrpo SIZE "$DEV" | head -n1)
+    echo "  - Disk size: $DISK_SIZE" >> "$LOG_FILE"
+    echo "  - Partition size: $PART_SIZE" >> "$LOG_FILE"
 
     echo ">>> Checking if $UUID or $MOUNT_POINT already exists in fstab..." >> "$LOG_FILE"
     if grep -qE "UUID=${UUID}|[[:space:]]${MOUNT_POINT}[[:space:]]" "$FSTAB"; then
       echo "✓ Disk already present in $FSTAB. Skipping." >> "$LOG_FILE"
 
-      # Asegurarse de que está montado
       if ! mountpoint -q "$MOUNT_POINT" 2>/dev/null; then
         echo ">>> Mounting existing entry..." >> "$LOG_FILE"
         sudo mkdir -p "$MOUNT_POINT"
@@ -110,7 +167,6 @@ add_nvme2(){
     echo ">>> Creating mount point: $MOUNT_POINT" >> "$LOG_FILE"
     sudo mkdir -p "$MOUNT_POINT"
 
-    # Build the fstab line
     FSTAB_LINE="UUID=${UUID}  ${MOUNT_POINT}  ${FSTYPE}  defaults,noatime  0  2"
 
     echo ">>> Backing up $FSTAB to ${FSTAB}.bak" >> "$LOG_FILE"
@@ -125,6 +181,10 @@ add_nvme2(){
 
     if [ $? -eq 0 ]; then
       echo "✓ Successfully mounted $MOUNT_POINT" >> "$LOG_FILE"
+
+      # Mostrar tamaño final montado
+      MOUNTED_SIZE=$(df -h "$MOUNT_POINT" | tail -1 | awk '{print $2}')
+      echo "  - Mounted size: $MOUNTED_SIZE" >> "$LOG_FILE"
     else
       echo "ERROR: Failed to mount $MOUNT_POINT" >> "$LOG_FILE"
       return 1
