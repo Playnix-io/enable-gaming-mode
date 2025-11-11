@@ -19,10 +19,40 @@ add_nvme2(){
 
     echo ">>> Checking if $DEV_DISK exists..." >> "$LOG_FILE"
     if [[ ! -b "$DEV_DISK" ]]; then
-      echo "ERROR: $DEV_DISK does not exist. No 2nd NVME drive found." >> "$LOG_FILE"
-      return 1
+      echo "INFO: $DEV_DISK does not exist. No 2nd NVME drive found." >> "$LOG_FILE"
+      return 0  # No es error, simplemente no hay disco
     else
       echo "SUCCESS: $DEV_DISK exists, continue." >> "$LOG_FILE"
+    fi
+
+    # Verificar si el UUID actual está en fstab
+    FSTAB_UUID=$(grep "$MOUNT_POINT" "$FSTAB" | grep -oP 'UUID=\K[^ ]+' | head -1)
+
+    if [[ -n "$FSTAB_UUID" ]] && [[ -b "$DEV" ]]; then
+        CURRENT_UUID=$(lsblk -nrpo UUID "$DEV" | head -n1)
+
+        if [[ -n "$CURRENT_UUID" ]] && [[ "$CURRENT_UUID" == "$FSTAB_UUID" ]]; then
+            echo "✓ NVME2 already configured correctly (UUID: $CURRENT_UUID)" >> "$LOG_FILE"
+
+            # Solo montar si no está montado
+            if ! mountpoint -q "$MOUNT_POINT" 2>/dev/null; then
+                sudo mkdir -p "$MOUNT_POINT"
+                if sudo mount "$MOUNT_POINT" 2>/dev/null; then
+                    echo "✓ Mounted successfully" >> "$LOG_FILE"
+                    sudo chown -R "playnix:playnix" "$MOUNT_POINT"
+                fi
+            else
+                echo "✓ Already mounted" >> "$LOG_FILE"
+            fi
+
+            return 0
+        else
+            echo "⚠ Different disk detected!" >> "$LOG_FILE"
+            echo "  - Expected UUID: $FSTAB_UUID" >> "$LOG_FILE"
+            echo "  - Current UUID:  ${CURRENT_UUID:-none}" >> "$LOG_FILE"
+            echo ">>> Cleaning old fstab entry..." >> "$LOG_FILE"
+            sudo sed -i "\|$MOUNT_POINT|d" "$FSTAB"
+        fi
     fi
 
     # Verificar si existe alguna partición en el disco
@@ -151,12 +181,12 @@ add_nvme2(){
     echo "  - Disk size: $DISK_SIZE" >> "$LOG_FILE"
     echo "  - Partition size: $PART_SIZE" >> "$LOG_FILE"
 
-    echo ">>> Checking if $UUID or $MOUNT_POINT already exists in fstab..." >> "$LOG_FILE"
-    if grep -qE "UUID=${UUID}|[[:space:]]${MOUNT_POINT}[[:space:]]" "$FSTAB"; then
-      echo "✓ Disk already present in $FSTAB. Skipping." >> "$LOG_FILE"
+    echo ">>> Checking if $UUID already exists in fstab..." >> "$LOG_FILE"
+    if grep -qE "UUID=${UUID}" "$FSTAB"; then
+      echo "✓ UUID already present in $FSTAB. Skipping." >> "$LOG_FILE"
 
       if ! mountpoint -q "$MOUNT_POINT" 2>/dev/null; then
-        echo ">>> Mounting existing entry..." >> "$LOG_FILE"
+        echo ">>> Mounting..." >> "$LOG_FILE"
         sudo mkdir -p "$MOUNT_POINT"
         sudo mount "$MOUNT_POINT"
       fi
@@ -167,7 +197,7 @@ add_nvme2(){
     echo ">>> Creating mount point: $MOUNT_POINT" >> "$LOG_FILE"
     sudo mkdir -p "$MOUNT_POINT"
 
-    FSTAB_LINE="UUID=${UUID}  ${MOUNT_POINT}  ${FSTYPE}  defaults,noatime,nofail  0  2"
+    FSTAB_LINE="UUID=${UUID}  ${MOUNT_POINT}  ${FSTYPE}  defaults,noatime,nofail,x-systemd.device-timeout=5  0  2"
 
     echo ">>> Backing up $FSTAB to ${FSTAB}.bak" >> "$LOG_FILE"
     sudo cp "$FSTAB" "${FSTAB}.bak"
