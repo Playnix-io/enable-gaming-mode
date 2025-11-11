@@ -167,7 +167,7 @@ add_nvme2(){
     echo ">>> Creating mount point: $MOUNT_POINT" >> "$LOG_FILE"
     sudo mkdir -p "$MOUNT_POINT"
 
-    FSTAB_LINE="UUID=${UUID}  ${MOUNT_POINT}  ${FSTYPE}  defaults,noatime  0  2"
+    FSTAB_LINE="UUID=${UUID}  ${MOUNT_POINT}  ${FSTYPE}  defaults,noatime,nofail  0  2"
 
     echo ">>> Backing up $FSTAB to ${FSTAB}.bak" >> "$LOG_FILE"
     sudo cp "$FSTAB" "${FSTAB}.bak"
@@ -207,6 +207,11 @@ add_nvme2_library(){
     BASE_MOUNT="/run/media/${USER_NAME}/nvme2"
     LIB_ROOT="${BASE_MOUNT}/SteamLibrary"
     VDF_FILE="${LIB_ROOT}/libraryfolder.vdf"
+
+    if ! mountpoint -q "/run/media/playnix/nvme2"; then
+        echo "WARNING: NVME2 not mounted, skipping Steam library" >> "$LOG_FILE"
+        return 0
+    fi
 
     echo ">>> Using user: ${USER_NAME}" >> "$LOG_FILE"
     echo ">>> Base mount: ${BASE_MOUNT}" >> "$LOG_FILE"
