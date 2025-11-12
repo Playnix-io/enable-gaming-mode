@@ -29,7 +29,7 @@ sudo pacman -Sy steam --noconfirm
 sudo pacman -S nano curl git wget base-devel firefox plymouth gwenview fuse --noconfirm
 
 git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
-
+echo "playnix" | sudo -S pwd
 yay -S gamescope-session-steam-git --noconfirm --sudoloop
 echo "playnix" | sudo -S pwd
 echo "24"
