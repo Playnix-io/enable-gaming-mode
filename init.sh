@@ -86,7 +86,7 @@ sudo curl -L -o /etc/systemd/system/boot-custom-actions.service "https://raw.git
 sudo chmod +x /usr/local/bin/boot-custom-actions.sh
 sudo systemctl enable boot-custom-actions.service
 
-sudo systemctl enable --now sshd
+#sudo systemctl enable --now sshd
 
 rm -rf "$HOME/Desktop/enable-gaming.desktop"
 #Creates random UUID
