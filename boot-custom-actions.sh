@@ -337,6 +337,35 @@ EOF
 
 echo "=== Boot Custom Actions started as $(whoami): $(date) ===" > "$LOG_FILE"
 
+#Creates random UUID on first boot
+if [ ! -f /etc/.uuid ]; then
+
+    echo "playnix" | sudo -S pwd
+    CONTENT_ID="$(( RANDOM * RANDOM ))"
+    echo $CONTENT_ID > "/home/playnix/.uuid"
+    echo $CONTENT_ID | sudo tee -a /etc/.uuid
+
+cat << EOF | sudo tee /etc/os-release > /dev/null
+NAME="Playnix OS"
+PRETTY_NAME="Playnix OS Gaming Edition"
+ID=playnix
+ID_LIKE=arch
+BUILD_ID=rolling
+ANSI_COLOR="38;2;23;147;209"
+HOME_URL="https://shop.playnix.io/"
+DOCUMENTATION_URL="https://manual.playnix.io"
+SUPPORT_URL="https://support.playnix.io"
+BUG_REPORT_URL="https://support.playnix.io"
+LOGO=playnix
+VERSION_CODENAME="Playnix OS"
+VERSION_ID=1.0
+VARIANT="Playnix OS"
+VARIANT_ID=${CONTENT_ID}
+EOF
+
+fi
+
+
 add_nvme2
 
 if ! gpg --list-keys "$GPG_KEY_FINGERPRINT" &> /dev/null; then

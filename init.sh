@@ -89,28 +89,7 @@ sudo systemctl enable boot-custom-actions.service
 #sudo systemctl enable --now sshd
 
 rm -rf "$HOME/Desktop/enable-gaming.desktop"
-#Creates random UUID
-CONTENT_ID="$(( RANDOM * RANDOM ))"
-echo $CONTENT_ID > "/home/playnix/.uuid"
-echo $CONTENT_ID | sudo tee -a /etc/.uuid
 
-cat << EOF | sudo tee /etc/os-release > /dev/null
-NAME="Playnix OS"
-PRETTY_NAME="Playnix OS Gaming Edition"
-ID=playnix
-ID_LIKE=arch
-BUILD_ID=rolling
-ANSI_COLOR="38;2;23;147;209"
-HOME_URL="https://playnix.io/"
-DOCUMENTATION_URL="https://manual.playnix.io"
-SUPPORT_URL="https://manual.playnix.io"
-BUG_REPORT_URL="https://manual.playnix.io"
-LOGO=playnix
-VERSION_CODENAME="Playnix OS"
-VERSION_ID=1.0
-VARIANT="Playnix OS"
-VARIANT_ID=${CONTENT_ID}
-EOF
 
 echo "100"
 
