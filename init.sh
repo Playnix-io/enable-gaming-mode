@@ -2,6 +2,9 @@
 (
 
 echo "playnix" | sudo -S pwd
+#Make sure our time is up to date
+sudo systemctl restart systemd-timesyncd
+
 echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/pacman -Syu --noconfirm" | sudo tee /etc/sudoers.d/99-pacman-nopasswd
 echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/pacman -S * --noconfirm" | sudo tee -a /etc/sudoers.d/99-pacman-nopasswd
 sudo chmod 440 /etc/sudoers.d/99-pacman-nopasswd
@@ -93,7 +96,7 @@ rm -rf "$HOME/Desktop/enable-gaming.desktop"
 
 echo "100"
 
-steamos-session-select gamescope
+#steamos-session-select gamescope
 
 ) |
 zenity --progress \
