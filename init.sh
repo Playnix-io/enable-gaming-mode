@@ -5,6 +5,8 @@ echo "playnix" | sudo -S pwd
 #Make sure our time is up to date
 sudo systemctl restart systemd-timesyncd
 
+sudo chown playnix:playnix $HOME -R
+
 echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/pacman -Syu --noconfirm" | sudo tee /etc/sudoers.d/99-pacman-nopasswd
 echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/pacman -S * --noconfirm" | sudo tee -a /etc/sudoers.d/99-pacman-nopasswd
 sudo chmod 440 /etc/sudoers.d/99-pacman-nopasswd
