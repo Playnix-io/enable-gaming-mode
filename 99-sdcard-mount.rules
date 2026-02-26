@@ -1,0 +1,6 @@
+# SD Card auto-mount rules for Playnix OS
+# Matches SD card partitions (mmcblk0p1, mmcblk0p2, etc.)
+# Triggers sdcard-mount@.service on insert/remove
+
+ACTION=="add", KERNEL=="mmcblk[0-9]p[0-9]*", ENV{SYSTEMD_WANTS}="sdcard-mount@%k.service"
+ACTION=="remove", KERNEL=="mmcblk[0-9]p[0-9]*", RUN+="/usr/bin/systemctl stop sdcard-mount@%k.service"

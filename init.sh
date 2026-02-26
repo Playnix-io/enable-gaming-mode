@@ -91,6 +91,13 @@ sudo curl -L -o /etc/systemd/system/boot-custom-actions.service "https://raw.git
 sudo chmod +x /usr/local/bin/boot-custom-actions.sh
 sudo systemctl enable boot-custom-actions.service
 
+echo "#Setting up SD card auto-mount"
+sudo curl -L -o /usr/local/bin/sdcard-mount.sh "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/sdcard-mount.sh"
+sudo chmod +x /usr/local/bin/sdcard-mount.sh
+sudo curl -L -o /etc/udev/rules.d/99-sdcard-mount.rules "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/99-sdcard-mount.rules"
+sudo curl -L -o /etc/systemd/system/sdcard-mount@.service "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/sdcard-mount@.service"
+sudo udevadm control --reload-rules
+
 #pacman lock
 sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
 

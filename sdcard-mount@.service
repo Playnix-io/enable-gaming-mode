@@ -1,0 +1,13 @@
+[Unit]
+Description=SD Card mount for %i
+BindsTo=dev-%i.device
+After=dev-%i.device
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/sdcard-mount.sh mount %i
+ExecStop=/usr/local/bin/sdcard-mount.sh unmount %i
+TimeoutStartSec=30
+StandardOutput=journal
+StandardError=journal
