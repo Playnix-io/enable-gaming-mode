@@ -25,6 +25,38 @@ if [[ "${UUID:-}" == "testbed" ]]; then
     
     echo "✓ UUID in rollout group (${ROLLOUT_PERCENTAGE}% < ${ROLLOUT_TARGET}%)"
     echo "BEGIN REMOTE CODE --- $(date +%s) ---" >> "$LOG_FILE"
+    
+    # Fix audio lag
+    #mkdir -p ~/.config/pipewire/pipewire.conf.d && cat > ~/.config/pipewire/pipewire.conf.d/99-gaming.conf << 'EOF'
+    #context.properties = {
+    #    default.clock.rate = 48000
+    #    default.clock.quantum = 2048
+    #    default.clock.min-quantum = 2048
+    #    default.clock.max-quantum = 2048
+    #}
+    #EOF
+    #sudo pacman -S rtkit --noconfirm
+    #cat > ~/.config/pipewire/pipewire.conf.d/99-gaming.conf << 'EOF'
+    #context.properties = {
+    #    default.clock.rate = 48000
+    #    default.clock.quantum = 2048
+    #    default.clock.min-quantum = 2048
+    #    default.clock.max-quantum = 2048
+    #}
+    #
+    #context.modules = [
+    #    { name = libpipewire-module-rtkit
+    #        args = {
+    #            nice.level = -15
+    #            rt.prio = 88
+    #            rt.time.soft = 200000
+    #            rt.time.hard = 200000
+    #        }
+    #        flags = [ ifexists nofail ]
+    #    }
+    #]
+    #EOF
+    #systemctl --user restart pipewire pipewire-pulse wireplumber
 
     #Pacman update
     if [ -f /var/lib/pacman/db.lck ]; then
@@ -36,7 +68,11 @@ if [[ "${UUID:-}" == "testbed" ]]; then
             echo "Another pacman process is running. Exiting..." >> "$LOG_FILE"
         fi
     fi
-
+    
+    sudo pacman -Rdd plasma-meta --noconfirm && sudo pacman -Rns krdp freerdp2 --noconfirm
+    sudo pacman -Sy archlinux-keyring --noconfirm
+    sudo rm -rf /usr/lib/firmware/nvidia/ad103 /usr/lib/firmware/nvidia/ad104 /usr/lib/firmware/nvidia/ad106 /usr/lib/firmware/nvidia/ad107
+    
     sudo pacman -Syu --noconfirm | sudo tee -a $LOG_FILE
     EXIT_CODE=$?
 
