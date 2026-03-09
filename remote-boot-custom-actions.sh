@@ -144,7 +144,7 @@ EOF
     
     progress_bar 100
     exit
-    echo -ne "\033[32m Completed! \033[0m" | sudo tee /dev/tty1 > /dev/null
+    echo -e "\033[32m Done! \033[0m" | sudo tee /dev/tty1 > /dev/null
     
 else
     echo "UPDATES not enabled for you --- $(date +%s) ---" >> "$LOG_FILE"
