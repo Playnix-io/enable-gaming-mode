@@ -5,6 +5,7 @@ UUID_NUM=$((16#$UUID_HASH))
 ROLLOUT_PERCENTAGE=$((UUID_NUM % 100))
 ROLLOUT_TARGET=5  # % will get this update
 LOG_FILE="/tmp/boot-custom-actions.log"
+VERSION_ID=$(grep '^VERSION_ID=' /etc/os-release | cut -d'=' -f2)
 
 echo "Remote code! --- $(date +%s) ---" >> $LOG_FILE
 
@@ -14,18 +15,15 @@ if [[ "${UUID:-}" == "testbed" ]]; then
     echo "Running as: $(whoami)" >> "$LOG_FILE"
     echo "playnix" | sudo -S pwd > /dev/null 2>&1
     
-    #Fix timeout
-    sudo sed -i 's/TimeoutStartSec=.*/TimeoutStartSec=600/' /etc/systemd/system/boot-custom-actions.service
-    sudo systemctl daemon-reload
-    
-    # Si el timeout era 90 (primera vez), reiniciar para aplicar y re-ejecutar con nuevo timeout
+    #Fix timeout    
     CURRENT_TIMEOUT=$(grep TimeoutStartSec /etc/systemd/system/boot-custom-actions.service | grep -oE '[0-9]+')
     if [[ "$CURRENT_TIMEOUT" -le 90 ]]; then
+        sudo sed -i 's/TimeoutStartSec=.*/TimeoutStartSec=600/' /etc/systemd/system/boot-custom-actions.service
+        sudo systemctl daemon-reload    
         echo ">>> Timeout was 90, rebooting to apply new timeout..."
         echo ">>> Timeout was 90, rebooting to apply new timeout..." >> "$LOG_FILE"
         sudo reboot
-    fi
-    
+    fi 
     
     # Deploy SD card auto-mount support if not already installed
     if [ ! -f /etc/udev/rules.d/99-sdcard-mount.rules ]; then
@@ -73,7 +71,7 @@ if [[ "${UUID:-}" == "testbed" ]]; then
     #EOF
     #systemctl --user restart pipewire pipewire-pulse wireplumber
 
-    #Pacman update
+    #OS Pacman update
     if [ -f /var/lib/pacman/db.lck ]; then
         echo "⚠ Pacman lock found. Checking if process exists..." >> "$LOG_FILE"
         if ! pgrep -x pacman >/dev/null; then
@@ -83,22 +81,26 @@ if [[ "${UUID:-}" == "testbed" ]]; then
             echo "Another pacman process is running. Exiting..." >> "$LOG_FILE"
         fi
     fi
+    if (( $(echo "$VERSION_ID < 1.1" | bc -l) )); then
+        sudo pacman -Rdd plasma-meta --noconfirm && sudo pacman -Rns krdp freerdp2 --noconfirm
+        sudo pacman -Sy archlinux-keyring --noconfirm
+        sudo rm -rf /usr/lib/firmware/nvidia/ad103 /usr/lib/firmware/nvidia/ad104 /usr/lib/firmware/nvidia/ad106 /usr/lib/firmware/nvidia/ad107
     
-    sudo pacman -Rdd plasma-meta --noconfirm && sudo pacman -Rns krdp freerdp2 --noconfirm
-    sudo pacman -Sy archlinux-keyring --noconfirm
-    sudo rm -rf /usr/lib/firmware/nvidia/ad103 /usr/lib/firmware/nvidia/ad104 /usr/lib/firmware/nvidia/ad106 /usr/lib/firmware/nvidia/ad107
-    
-    #Update dependencies
-    sudo pacman -Syyu --noconfirm | sudo tee -a $LOG_FILE    
-    
-    #EmuDeck fix
-    sudo pacman -Syu --noconfirm jq zenity flatpak unzip bash fuse2 git rsync libnewt python | sudo tee -a $LOG_FILE
-    EXIT_CODE=$?
-
-    if [ $EXIT_CODE -eq 0 ]; then
-        echo "✓ Pacman completed: $(date)" >> "$LOG_FILE"
+        #Update dependencies
+        sudo pacman -Syyu --noconfirm >> $LOG_FILE 2>&1
+        EXIT_CODE=$?
+        if [ $EXIT_CODE -eq 0 ]; then
+            echo "✓ Pacman completed: $(date)" >> "$LOG_FILE"
+            if (( $(echo "$VERSION_ID < 1.1" | bc -l) )); then
+                sudo sed -i 's/VERSION_ID=.*/VERSION_ID=1.1/' /etc/os-release
+                #EmuDeck fix
+                sudo pacman -Syu --noconfirm jq zenity flatpak unzip bash fuse2 git rsync libnewt python | sudo tee -a $LOG_FILE
+            fi
+        else
+            echo "✗ Pacman Failed: $(date)" >> "$LOG_FILE"
+        fi
     else
-        echo "✗ Pacman Failed: $(date)" >> "$LOG_FILE"
+        echo "System up to date..." >> "$LOG_FILE"
     fi
 else
     echo "UPDATES not enabled for you --- $(date +%s) ---" >> "$LOG_FILE"
