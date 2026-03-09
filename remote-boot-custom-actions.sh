@@ -11,7 +11,8 @@ echo "Remote code! --- $(date +%s) ---" >> $LOG_FILE
 
 #if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
 if [[ "${UUID:-}" == "testbed" ]]; then
-
+    echo "Running as: $(whoami)" >> "$LOG_FILE"
+    echo "playnix" | sudo -S pwd
     # Deploy SD card auto-mount support if not already installed
     if [ ! -f /etc/udev/rules.d/99-sdcard-mount.rules ]; then
         echo ">>> Installing SD card auto-mount support..." >> "$LOG_FILE"
