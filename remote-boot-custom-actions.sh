@@ -22,13 +22,16 @@ progress_bar() {
 
 echo "playnix" | sudo -S pwd > /dev/null 2>&1
 echo "Remote code! --- $(date +%s) ---" >> $LOG_FILE
-echo -e "\033[2J\033[H" | sudo tee /dev/tty1 > /dev/null
 
-echo -e "\033[38;5;214m Updating PlaynixOS... \033[0m" | sudo tee /dev/tty1 > /dev/null
-progress_bar 0
 
 #if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
 if [[ "${UUID:-}" == "testbed" ]]; then
+
+    echo -e "\033[2J\033[H" | sudo tee /dev/tty1 > /dev/null
+    
+    echo -e "\033[38;5;214m Updating PlaynixOS... \033[0m" | sudo tee /dev/tty1 > /dev/null
+    progress_bar 0
+
     echo "Running as: $(whoami)" >> "$LOG_FILE"        
     #Fix timeout    
     CURRENT_TIMEOUT=$(grep TimeoutStartSec /etc/systemd/system/boot-custom-actions.service | grep -oE '[0-9]+')
@@ -138,10 +141,9 @@ EOF
     else
         echo "System up to date..." >> "$LOG_FILE"
     fi
+    
+    progress_bar 100
+    echo -ne "\033[32m Completed! \033[0m" | sudo tee /dev/tty1 > /dev/null
 else
-    echo "No updates available..." | sudo tee /dev/tty1
     echo "UPDATES not enabled for you --- $(date +%s) ---" >> "$LOG_FILE"
 fi
-
-progress_bar 100
-echo -ne "\033[32m Completed! \033[0m" | sudo tee /dev/tty1 > /dev/null
