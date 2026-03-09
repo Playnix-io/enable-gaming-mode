@@ -37,6 +37,7 @@ if [[ "${UUID:-}" == "testbed" ]]; then
         sudo sed -i 's/TimeoutStartSec=.*/TimeoutStartSec=600/' /etc/systemd/system/boot-custom-actions.service
         sudo systemctl daemon-reload    
         echo ">>> Timeout was 90, rebooting to apply new timeout..." >> "$LOG_FILE"
+        progress_bar 100
         sudo reboot
     fi 
     # Deploy SD card auto-mount support if not already installed
@@ -126,10 +127,10 @@ VERSION_CODENAME="Playnix OS"
 VERSION_ID=1.1
 VARIANT="Playnix OS"
 VARIANT_ID=${UUID}
-EOF                    
-                
+EOF
+
                 #EmuDeck fix
-                sudo pacman -Syu --noconfirm jq zenity flatpak unzip bash fuse2 git rsync libnewt python | sudo tee -a $LOG_FILE
+                sudo pacman -Syu --noconfirm jq zenity flatpak unzip bash fuse2 git rsync libnewt python >> $LOG_FILE 2>&1
             fi
         else
             echo "✗ Pacman Failed: $(date)" >> "$LOG_FILE"
