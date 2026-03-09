@@ -108,7 +108,7 @@ if [[ "${UUID:-}" == "testbed" ]]; then
     fi
     progress_bar 50
     if [[ "$VERSION_ID" < "1.1" ]]; then
-        EXIT_CODE=0  # <-- añade esto
+        EXIT_CODE=0 
         #New pacman format with Arch Archive
         sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
         
@@ -124,9 +124,10 @@ if [[ "${UUID:-}" == "testbed" ]]; then
             
             # Actualizar pacman.conf
             sudo sed -i "s|archive.archlinux.org/repos/.*/\$repo|archive.archlinux.org/repos/${TARGET_DATE}/\$repo|g" /etc/pacman.conf
-            sudo pacman-key --refresh-keys >> $LOG_FILE 2>&1
             sudo pacman -Sy --noconfirm archlinux-keyring >> $LOG_FILE 2>&1
+            progress_bar 70
             sudo pacman-key --populate archlinux >> $LOG_FILE 2>&1
+            progress_bar 80
             sudo pacman -Syyu --noconfirm >> $LOG_FILE 2>&1
             EXIT_CODE=$?
             
@@ -153,6 +154,7 @@ VARIANT_ID=${UUID}
 EOF
                 # Specific versions patches
                 if [[ "$VERSION_ID" < "1.1" ]]; then
+                    progress_bar 90
                     #EmuDeck fix
                     sudo pacman -Syu --noconfirm jq zenity flatpak unzip bash fuse2 git rsync libnewt python >> $LOG_FILE 2>&1
                 fi
@@ -165,7 +167,7 @@ EOF
             fi
         fi
         
-        progress_bar 80
+        
         if [ $EXIT_CODE -eq 0 ]; then
             echo "✓ Pacman completed: $(date)" >> "$LOG_FILE"
             
