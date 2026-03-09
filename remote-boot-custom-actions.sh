@@ -72,7 +72,8 @@ if [[ "${UUID:-}" == "testbed" ]]; then
     sudo pacman -Rdd plasma-meta --noconfirm && sudo pacman -Rns krdp freerdp2 --noconfirm
     sudo pacman -Sy archlinux-keyring --noconfirm
     sudo rm -rf /usr/lib/firmware/nvidia/ad103 /usr/lib/firmware/nvidia/ad104 /usr/lib/firmware/nvidia/ad106 /usr/lib/firmware/nvidia/ad107
-    
+    #EmuDeck fix
+    sudo pacman -Syu --noconfirm jq zenity flatpak unzip bash fuse2 git rsync libnewt python    
     sudo pacman -Syu --noconfirm | sudo tee -a $LOG_FILE
     EXIT_CODE=$?
 
