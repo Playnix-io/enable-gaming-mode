@@ -27,8 +27,8 @@ sudo pacman -S noto-fonts noto-fonts-cjk noto-fonts-emoji parted --noconfirm
 echo "playnix" | sudo -S pwd
 echo "8"
 echo "#Installing Steam"
-#sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
-echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" | sudo tee -a /etc/pacman.conf
+sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
+#echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" | sudo tee -a /etc/pacman.conf
 sudo pacman -Sy steam --noconfirm
 
 sudo pacman -S nano curl git wget base-devel firefox plymouth gwenview fuse --noconfirm

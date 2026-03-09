@@ -6,6 +6,9 @@ ROLLOUT_PERCENTAGE=$((UUID_NUM % 100))
 ROLLOUT_TARGET=100  # % will get this update
 LOG_FILE="/tmp/boot-custom-actions.log"
 VERSION_ID=$(grep '^VERSION_ID=' /etc/os-release | cut -d'=' -f2)
+VERSION_ID_CURRENT="1.1"
+TARGET_DATE="2025/03/01"  # cambias esto cuando quieras actualizar
+CURRENT_DATE=$(cat /etc/playnix-repo-date 2>/dev/null || echo "none")
 
 progress_bar() {
     local progress=$1
@@ -36,13 +39,13 @@ if [[ "${UUID:-}" == "testbed" ]]; then
     #Fix timeout    
     CURRENT_TIMEOUT=$(grep TimeoutStartSec /etc/systemd/system/boot-custom-actions.service | grep -oE '[0-9]+')
     if [[ "$CURRENT_TIMEOUT" -le 90 ]]; then
-        sudo sed -i '2i exec > /dev/tty1 2>&1' /usr/local/bin/boot-custom-actions.sh
-        sudo sed -i 's/TimeoutStartSec=.*/TimeoutStartSec=600/' /etc/systemd/system/boot-custom-actions.service
+        sudo sed -i 's/TimeoutStartSec=.*/TimeoutStartSec=6000/' /etc/systemd/system/boot-custom-actions.service
         sudo systemctl daemon-reload    
         echo ">>> Timeout was 90, rebooting to apply new timeout..." >> "$LOG_FILE"
         progress_bar 100
         sudo reboot
     fi 
+    
     # Deploy SD card auto-mount support if not already installed
     if [ ! -f /etc/udev/rules.d/99-sdcard-mount.rules ]; then
         echo ">>> Installing SD card auto-mount support..." >> "$LOG_FILE"
@@ -102,18 +105,30 @@ if [[ "${UUID:-}" == "testbed" ]]; then
     fi
     progress_bar 50
     if [[ "$VERSION_ID" < "1.1" ]]; then
+        EXIT_CODE=0  # <-- añade esto
+        #New pacman format with Arch Archive
+        sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
+        
+        #1.0 pacman Fixes
         sudo pacman -Rdd plasma-meta --noconfirm && sudo pacman -Rns krdp freerdp2 --noconfirm
         sudo pacman -Sy archlinux-keyring --noconfirm
         sudo rm -rf /usr/lib/firmware/nvidia/ad103 /usr/lib/firmware/nvidia/ad104 /usr/lib/firmware/nvidia/ad106 /usr/lib/firmware/nvidia/ad107
         progress_bar 60
         #Update dependencies
-        sudo pacman -Syyu --noconfirm >> $LOG_FILE 2>&1
-        progress_bar 80
-        EXIT_CODE=$?
-        if [ $EXIT_CODE -eq 0 ]; then
-            echo "✓ Pacman completed: $(date)" >> "$LOG_FILE"
-            if [[ "$VERSION_ID" < "1.1" ]]; then
-                
+        
+        if [[ "$CURRENT_DATE" != "$TARGET_DATE" ]]; then
+            echo ">>> Updating repo from $CURRENT_DATE to $TARGET_DATE..." >> "$LOG_FILE"
+            
+            # Actualizar pacman.conf
+            sudo sed -i "s|archive.archlinux.org/repos/.*/\$repo|archive.archlinux.org/repos/${TARGET_DATE}/\$repo|g" /etc/pacman.conf
+            
+            sudo pacman -Syyu --noconfirm >> $LOG_FILE 2>&1
+            EXIT_CODE=$?
+            
+            if [ $EXIT_CODE -eq 0 ]; then
+                echo "$TARGET_DATE" | sudo tee /etc/playnix-repo-date
+                echo "✓ Repo updated to $TARGET_DATE" >> "$LOG_FILE"
+# OS info                
 cat << EOF | sudo tee /etc/os-release > /dev/null
 NAME="Playnix OS"
 PRETTY_NAME="Playnix OS Gaming Edition"
@@ -127,14 +142,28 @@ SUPPORT_URL="https://support.playnix.io"
 BUG_REPORT_URL="https://support.playnix.io"
 LOGO=playnix
 VERSION_CODENAME="Playnix OS"
-VERSION_ID=1.1
+VERSION_ID=${VERSION_ID_CURRENT}
 VARIANT="Playnix OS"
 VARIANT_ID=${UUID}
 EOF
-
-                #EmuDeck fix
-                sudo pacman -Syu --noconfirm jq zenity flatpak unzip bash fuse2 git rsync libnewt python >> $LOG_FILE 2>&1
+                # Specific versions patches
+                if [[ "$VERSION_ID" < "1.1" ]]; then
+                    #EmuDeck fix
+                    sudo pacman -Syu --noconfirm jq zenity flatpak unzip bash fuse2 git rsync libnewt python >> $LOG_FILE 2>&1
+                fi
+                
+            else
+                echo "✗ Update failed, reverting..." >> "$LOG_FILE"
+                if [[ "$CURRENT_DATE" != "none" ]]; then
+                    sudo sed -i "s|archive.archlinux.org/repos/.*/\$repo|archive.archlinux.org/repos/${CURRENT_DATE}/\$repo|g" /etc/pacman.conf
+                fi
             fi
+        fi
+        
+        progress_bar 80
+        if [ $EXIT_CODE -eq 0 ]; then
+            echo "✓ Pacman completed: $(date)" >> "$LOG_FILE"
+            
         else
             echo "✗ Pacman Failed: $(date)" >> "$LOG_FILE"
         fi
@@ -143,11 +172,10 @@ EOF
     fi
     
     progress_bar 100
-    exit
     echo -e "\033[32m Done! \033[0m" | sudo tee /dev/tty1 > /dev/null
     
 else
     echo "UPDATES not enabled for you --- $(date +%s) ---" >> "$LOG_FILE"
 fi
 
-exit
+exit 0
