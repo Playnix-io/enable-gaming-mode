@@ -1,4 +1,9 @@
 #!/bin/bash
+#Change this to create updates
+VERSION_ID_CURRENT="1.1"
+TARGET_DATE="2025/03/01"
+
+
 UUID=$(cat "/etc/.uuid")
 UUID_HASH=$(echo "$UUID" | md5sum | tr -d 'a-f' | cut -c1-8)
 UUID_NUM=$((16#$UUID_HASH))
@@ -6,8 +11,6 @@ ROLLOUT_PERCENTAGE=$((UUID_NUM % 100))
 ROLLOUT_TARGET=100  # % will get this update
 LOG_FILE="/tmp/boot-custom-actions.log"
 VERSION_ID=$(grep '^VERSION_ID=' /etc/os-release | cut -d'=' -f2)
-VERSION_ID_CURRENT="1.1"
-TARGET_DATE="2025/03/01"  # cambias esto cuando quieras actualizar
 CURRENT_DATE=$(cat /etc/playnix-repo-date 2>/dev/null || echo "none")
 
 progress_bar() {
