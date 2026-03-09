@@ -124,7 +124,9 @@ if [[ "${UUID:-}" == "testbed" ]]; then
             
             # Actualizar pacman.conf
             sudo sed -i "s|archive.archlinux.org/repos/.*/\$repo|archive.archlinux.org/repos/${TARGET_DATE}/\$repo|g" /etc/pacman.conf
-            
+            sudo pacman-key --refresh-keys >> $LOG_FILE 2>&1
+            sudo pacman -Sy --noconfirm archlinux-keyring >> $LOG_FILE 2>&1
+            sudo pacman-key --populate archlinux >> $LOG_FILE 2>&1
             sudo pacman -Syyu --noconfirm >> $LOG_FILE 2>&1
             EXIT_CODE=$?
             
