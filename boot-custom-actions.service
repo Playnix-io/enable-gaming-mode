@@ -9,9 +9,11 @@ User=playnix
 Group=playnix
 ExecStart=/usr/local/bin/boot-custom-actions.sh
 RemainAfterExit=yes
-TimeoutStartSec=90
-StandardOutput=journal
-StandardError=journal
+TimeoutStartSec=600
+TTYPath=/dev/tty1
+StandardInput=tty
+StandardOutput=tty
+StandardError=tty
 
 [Install]
 WantedBy=multi-user.target

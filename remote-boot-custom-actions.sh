@@ -12,7 +12,21 @@ echo "Remote code! --- $(date +%s) ---" >> $LOG_FILE
 #if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
 if [[ "${UUID:-}" == "testbed" ]]; then
     echo "Running as: $(whoami)" >> "$LOG_FILE"
-    echo "playnix" | sudo -S pwd
+    echo "playnix" | sudo -S pwd > /dev/null 2>&1
+    
+    #Fix timeout
+    sudo sed -i 's/TimeoutStartSec=.*/TimeoutStartSec=600/' /etc/systemd/system/boot-custom-actions.service
+    sudo systemctl daemon-reload
+    
+    # Si el timeout era 90 (primera vez), reiniciar para aplicar y re-ejecutar con nuevo timeout
+    CURRENT_TIMEOUT=$(grep TimeoutStartSec /etc/systemd/system/boot-custom-actions.service | grep -oE '[0-9]+')
+    if [[ "$CURRENT_TIMEOUT" -le 90 ]]; then
+        echo ">>> Timeout was 90, rebooting to apply new timeout..."
+        echo ">>> Timeout was 90, rebooting to apply new timeout..." >> "$LOG_FILE"
+        sudo reboot
+    fi
+    
+    
     # Deploy SD card auto-mount support if not already installed
     if [ ! -f /etc/udev/rules.d/99-sdcard-mount.rules ]; then
         echo ">>> Installing SD card auto-mount support..." >> "$LOG_FILE"
