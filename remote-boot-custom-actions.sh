@@ -1,7 +1,7 @@
 #!/bin/bash
 #Change this to create updates
 VERSION_ID_CURRENT="1.1"
-TARGET_DATE="2025/03/01"
+TARGET_DATE="2025/05/25"
 
 
 UUID=$(cat "/etc/.uuid")
