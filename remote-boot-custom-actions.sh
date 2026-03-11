@@ -30,8 +30,8 @@ echo "playnix" | sudo -S pwd > /dev/null 2>&1
 echo "Remote code! --- $(date +%s) ---" >> $LOG_FILE
 
 
-#if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
-if [[ "${UUID:-}" == "testbed" ]]; then
+if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
+#if [[ "${UUID:-}" == "testbed" ]]; then
 
     echo -e "\033[2J\033[H" | sudo tee /dev/tty1 > /dev/null
     
@@ -50,15 +50,15 @@ if [[ "${UUID:-}" == "testbed" ]]; then
     fi 
     
     # Deploy SD card auto-mount support if not already installed
-    if [ ! -f /etc/udev/rules.d/99-sdcard-mount.rules ]; then
-        echo ">>> Installing SD card auto-mount support..." >> "$LOG_FILE"
-        sudo curl -sL -o /usr/local/bin/sdcard-mount.sh "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/sdcard-mount.sh"
-        sudo chmod +x /usr/local/bin/sdcard-mount.sh
-        sudo curl -sL -o /etc/udev/rules.d/99-sdcard-mount.rules "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/99-sdcard-mount.rules"
-        sudo curl -sL -o /etc/systemd/system/sdcard-mount@.service "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/sdcard-mount@.service"
-        sudo udevadm control --reload-rules
-        echo ">>> SD card support installed" >> "$LOG_FILE"
-    fi
+    #if [ ! -f /etc/udev/rules.d/99-sdcard-mount.rules ]; then
+    #    echo ">>> Installing SD card auto-mount support..." >> "$LOG_FILE"
+    #    sudo curl -sL -o /usr/local/bin/sdcard-mount.sh "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/sdcard-mount.sh"
+    #    sudo chmod +x /usr/local/bin/sdcard-mount.sh
+    #    sudo curl -sL -o /etc/udev/rules.d/99-sdcard-mount.rules "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/99-sdcard-mount.rules"
+    #    sudo curl -sL -o /etc/systemd/system/sdcard-mount@.service "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/sdcard-mount@.service"
+    #    sudo udevadm control --reload-rules
+    #    echo ">>> SD card support installed" >> "$LOG_FILE"
+    #fi
     
     echo "✓ UUID in rollout group (${ROLLOUT_PERCENTAGE}% < ${ROLLOUT_TARGET}%)"
     echo "BEGIN REMOTE CODE --- $(date +%s) ---" >> "$LOG_FILE"
@@ -107,7 +107,7 @@ if [[ "${UUID:-}" == "testbed" ]]; then
         fi
     fi
     progress_bar 50
-    if [[ "$VERSION_ID" < "1.1" ]]; then
+    if [[ "$VERSION_ID" < "$VERSION_ID_CURRENT" ]]; then
         EXIT_CODE=0 
         #New pacman format with Arch Archive
         sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
