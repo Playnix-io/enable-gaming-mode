@@ -112,6 +112,10 @@ if [[ "${UUID:-}" == "testbed" ]]; then
         #New pacman format with Arch Archive
         sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
         
+        #Timezone fix
+        echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/timedatectl set-timezone *" | sudo tee /etc/sudoers.d/99-timedatectl
+        sudo chmod 440 /etc/sudoers.d/99-timedatectl
+        
         #1.0 pacman Fixes
         sudo pacman -Rdd plasma-meta --noconfirm && sudo pacman -Rns krdp freerdp2 --noconfirm
         sudo pacman -Sy archlinux-keyring --noconfirm

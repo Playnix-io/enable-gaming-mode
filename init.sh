@@ -91,6 +91,10 @@ sudo curl -L -o /etc/systemd/system/boot-custom-actions.service "https://raw.git
 sudo chmod +x /usr/local/bin/boot-custom-actions.sh
 sudo systemctl enable boot-custom-actions.service
 
+#Timezone
+echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/timedatectl set-timezone *" | sudo tee /etc/sudoers.d/99-timedatectl
+sudo chmod 440 /etc/sudoers.d/99-timedatectl
+
 echo "#Setting up SD card auto-mount"
 sudo curl -L -o /usr/local/bin/sdcard-mount.sh "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/sdcard-mount.sh"
 sudo chmod +x /usr/local/bin/sdcard-mount.sh
