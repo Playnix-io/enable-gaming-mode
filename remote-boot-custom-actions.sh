@@ -26,7 +26,10 @@ progress_bar() {
     echo -ne "\r\033[38;5;214m [${bar}] ${progress}% \033[0m" | sudo tee /dev/tty1 > /dev/null
 }
 
-echo "playnix" | sudo -S pwd > /dev/null 2>&1
+if ! echo "playnix" | sudo -S pwd > /dev/null 2>&1; then
+    echo "sudo error! --- $(date +%s) ---" >> $LOG_FILE
+    exit 1
+fi
 echo "Remote code! --- $(date +%s) ---" >> $LOG_FILE
 
 
