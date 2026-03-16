@@ -138,6 +138,11 @@ if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
             sudo pacman -Syyu --noconfirm >> $LOG_FILE 2>&1
             EXIT_CODE=$?
             
+            if ! echo "playnix" | sudo -S pwd > /dev/null 2>&1; then
+                echo "sudo error! --- $(date +%s) ---" >> $LOG_FILE
+                exit 1
+            fi
+            
             if [ $EXIT_CODE -eq 0 ]; then
                 echo "$TARGET_DATE" | sudo tee /etc/playnix-repo-date
                 echo "✓ Repo updated to $TARGET_DATE" >> "$LOG_FILE"
