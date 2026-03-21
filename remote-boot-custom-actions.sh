@@ -58,6 +58,18 @@ if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
     
     
     if [[ "${UUID:-}" == "testbed" ]]; then
+    
+    
+        #Fix Sonic Mania
+        if ! echo "playnix" | sudo -S pwd > /dev/null 2>&1; then
+            echo "sudo error! --- $(date +%s) ---" >> $LOG_FILE
+            exit 1
+        fi
+        sudo pacman -S lib32-vulkan-radeon
+        sudo pacman -Rdd nvidia-utils lib32-nvidia-utils
+        
+        
+        #SD Card    
         RULES_FILE="/usr/lib/udev/rules.d/99-steamos-automount.rules"    
         
         if [[ ! -f "$RULES_FILE" ]]; then    

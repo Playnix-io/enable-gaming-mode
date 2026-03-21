@@ -31,7 +31,7 @@ sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/e
 #echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" | sudo tee -a /etc/pacman.conf
 sudo pacman -Sy steam --noconfirm
 
-sudo pacman -S nano curl git wget base-devel firefox plymouth gwenview fuse --noconfirm
+sudo pacman -S nano curl git wget base-devel firefox plymouth gwenview fuse lib32-vulkan-radeon --noconfirm
 
 git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
 echo "playnix" | sudo -S pwd
