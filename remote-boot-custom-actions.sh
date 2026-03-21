@@ -52,19 +52,31 @@ if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
         sudo reboot
     fi 
     
-    # Deploy SD card auto-mount support if not already installed
-    #if [ ! -f /etc/udev/rules.d/99-sdcard-mount.rules ]; then
-    #    echo ">>> Installing SD card auto-mount support..." >> "$LOG_FILE"
-    #    sudo curl -sL -o /usr/local/bin/sdcard-mount.sh "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/sdcard-mount.sh"
-    #    sudo chmod +x /usr/local/bin/sdcard-mount.sh
-    #    sudo curl -sL -o /etc/udev/rules.d/99-sdcard-mount.rules "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/99-sdcard-mount.rules"
-    #    sudo curl -sL -o /etc/systemd/system/sdcard-mount@.service "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/sdcard-mount@.service"
-    #    sudo udevadm control --reload-rules
-    #    echo ">>> SD card support installed" >> "$LOG_FILE"
-    #fi
     
     echo "✓ UUID in rollout group (${ROLLOUT_PERCENTAGE}% < ${ROLLOUT_TARGET}%)"
     echo "BEGIN REMOTE CODE --- $(date +%s) ---" >> "$LOG_FILE"
+    
+    
+    if [[ "${UUID:-}" == "testbed" ]]; then
+        RULES_FILE="/usr/lib/udev/rules.d/99-steamos-automount.rules"    
+        
+        if [[ ! -f "$RULES_FILE" ]]; then    
+            HWSUPPORT="/usr/libexec/hwsupport"
+            REPO_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/automount"
+                    
+            sudo mkdir -p "$HWSUPPORT"
+            
+            for f in block-device-event.sh common-functions steamos-automount.sh; do
+                sudo curl -fsSL -o "$HWSUPPORT/$f" "$REPO_URL/hwsupport/$f"
+            done
+            sudo chmod +x "$HWSUPPORT"/*.sh
+            
+            sudo curl -fsSL -o "$RULES_FILE" "$REPO_URL/udev/99-steamos-automount.rules"
+            
+            sudo udevadm control --reload
+            sudo udevadm trigger          
+        fi
+    fi     
     
     # Fix audio lag
     #mkdir -p ~/.config/pipewire/pipewire.conf.d && cat > ~/.config/pipewire/pipewire.conf.d/99-gaming.conf << 'EOF'

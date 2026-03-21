@@ -60,9 +60,25 @@ echo "#Creating desktop icon"
 curl -L -o "$HOME/Desktop/back.desktop" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/back.desktop"
 chmod +x "$HOME/Desktop/back.desktop"
 
-#Setting up autoupdater
-#curl -L -o "$HOME/.bashrc" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/.bashrc"
-#curl -L "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/playnix.pub" | gpg --import
+#Setting up SD Card automounter
+RULES_FILE="/usr/lib/udev/rules.d/99-steamos-automount.rules"
+HWSUPPORT="/usr/libexec/hwsupport"
+REPO_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/automount"
+
+echo "Installing steamos-automount..."
+
+sudo mkdir -p "$HWSUPPORT"
+
+for f in block-device-event.sh common-functions steamos-automount.sh; do
+    sudo curl -fsSL -o "$HWSUPPORT/$f" "$REPO_URL/hwsupport/$f"
+done
+sudo chmod +x "$HWSUPPORT"/*.sh
+
+sudo curl -fsSL -o "$RULES_FILE" "$REPO_URL/udev/99-steamos-automount.rules"
+
+sudo udevadm control --reload
+sudo udevadm trigger
+
 
 echo "56"
 echo "#Enabling Bluetooth"
@@ -94,13 +110,6 @@ sudo systemctl enable boot-custom-actions.service
 #Timezone
 echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/timedatectl set-timezone *" | sudo tee /etc/sudoers.d/99-timedatectl
 sudo chmod 440 /etc/sudoers.d/99-timedatectl
-
-echo "#Setting up SD card auto-mount"
-sudo curl -L -o /usr/local/bin/sdcard-mount.sh "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/sdcard-mount.sh"
-sudo chmod +x /usr/local/bin/sdcard-mount.sh
-sudo curl -L -o /etc/udev/rules.d/99-sdcard-mount.rules "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/99-sdcard-mount.rules"
-sudo curl -L -o /etc/systemd/system/sdcard-mount@.service "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/sdcard-mount@.service"
-sudo udevadm control --reload-rules
 
 #pacman lock
 sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
