@@ -1,8 +1,7 @@
 #!/bin/bash
 #Change this to create updates
-VERSION_ID_CURRENT="1.1"
-TARGET_DATE="2026/03/09"
-
+VERSION_ID_TARGET="1.2"
+PACMAN_TARGET_DATE="2026/03/09"
 
 UUID=$(cat "/etc/.uuid")
 UUID_HASH=$(echo "$UUID" | md5sum | tr -d 'a-f' | cut -c1-8)
@@ -10,8 +9,8 @@ UUID_NUM=$((16#$UUID_HASH))
 ROLLOUT_PERCENTAGE=$((UUID_NUM % 100))
 ROLLOUT_TARGET=100  # % will get this update
 LOG_FILE="/tmp/boot-custom-actions.log"
-VERSION_ID=$(grep '^VERSION_ID=' /etc/os-release | cut -d'=' -f2)
-CURRENT_DATE=$(cat /etc/playnix-repo-date 2>/dev/null || echo "none")
+VERSION_ID_CURRENT=$(grep '^VERSION_ID=' /etc/os-release | cut -d'=' -f2)
+PACMAN_CURRENT_DATE=$(cat /etc/playnix-repo-date 2>/dev/null || echo "none")
 
 progress_bar() {
     local progress=$1
@@ -25,105 +24,18 @@ progress_bar() {
     
     echo -ne "\r\033[38;5;214m [${bar}] ${progress}% \033[0m" | sudo tee /dev/tty1 > /dev/null
 }
-
-if ! echo "playnix" | sudo -S pwd > /dev/null 2>&1; then
-    echo "sudo error! --- $(date +%s) ---" >> $LOG_FILE
-    exit 1
-fi
-echo "Remote code! --- $(date +%s) ---" >> $LOG_FILE
-
-
-if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
-#if [[ "${UUID:-}" == "testbed" ]]; then
-
-    echo -e "\033[2J\033[H" | sudo tee /dev/tty1 > /dev/null
+check_sudo(){
+    if ! echo "playnix" | sudo -S pwd > /dev/null 2>&1; then
+        echo "sudo error! --- $(date +%s) ---" >> $LOG_FILE
+        exit 1
+    fi
+}
+check_pacman_health(){
+    check_sudo
+    if [[ "$VERSION_ID_CURRENT" < "1.1" ]]; then
+        sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
+    fi
     
-    echo -e "\033[38;5;214m Updating PlaynixOS... \033[0m" | sudo tee /dev/tty1 > /dev/null
-    progress_bar 0
-
-    echo "Running as: $(whoami)" >> "$LOG_FILE"        
-    #Fix timeout    
-    CURRENT_TIMEOUT=$(grep TimeoutStartSec /etc/systemd/system/boot-custom-actions.service | grep -oE '[0-9]+')
-    if [[ "$CURRENT_TIMEOUT" -le 90 ]]; then
-        sudo sed -i 's/TimeoutStartSec=.*/TimeoutStartSec=6000/' /etc/systemd/system/boot-custom-actions.service
-        sudo systemctl daemon-reload    
-        echo ">>> Timeout was 90, rebooting to apply new timeout..." >> "$LOG_FILE"
-        progress_bar 100
-        sudo reboot
-    fi 
-    
-    
-    echo "✓ UUID in rollout group (${ROLLOUT_PERCENTAGE}% < ${ROLLOUT_TARGET}%)"
-    echo "BEGIN REMOTE CODE --- $(date +%s) ---" >> "$LOG_FILE"
-    
-    
-    if [[ "${UUID:-}" == "testbed" ]]; then
-    
-    
-        #Fix Sonic Mania
-        if ! echo "playnix" | sudo -S pwd > /dev/null 2>&1; then
-            echo "sudo error! --- $(date +%s) ---" >> $LOG_FILE
-            exit 1
-        fi
-        sudo pacman -S lib32-vulkan-radeon
-        sudo pacman -Rdd nvidia-utils lib32-nvidia-utils
-        
-        
-        #SD Card    
-        RULES_FILE="/usr/lib/udev/rules.d/99-steamos-automount.rules"    
-        
-        if [[ ! -f "$RULES_FILE" ]]; then    
-            HWSUPPORT="/usr/libexec/hwsupport"
-            REPO_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/automount"
-                    
-            sudo mkdir -p "$HWSUPPORT"
-            
-            for f in block-device-event.sh common-functions steamos-automount.sh; do
-                sudo curl -fsSL -o "$HWSUPPORT/$f" "$REPO_URL/hwsupport/$f"
-            done
-            sudo chmod +x "$HWSUPPORT"/*.sh
-            
-            sudo curl -fsSL -o "$RULES_FILE" "$REPO_URL/udev/99-steamos-automount.rules"
-            
-            sudo udevadm control --reload
-            sudo udevadm trigger          
-        fi
-    fi     
-    
-    # Fix audio lag
-    #mkdir -p ~/.config/pipewire/pipewire.conf.d && cat > ~/.config/pipewire/pipewire.conf.d/99-gaming.conf << 'EOF'
-    #context.properties = {
-    #    default.clock.rate = 48000
-    #    default.clock.quantum = 2048
-    #    default.clock.min-quantum = 2048
-    #    default.clock.max-quantum = 2048
-    #}
-    #EOF
-    #sudo pacman -S rtkit --noconfirm
-    #cat > ~/.config/pipewire/pipewire.conf.d/99-gaming.conf << 'EOF'
-    #context.properties = {
-    #    default.clock.rate = 48000
-    #    default.clock.quantum = 2048
-    #    default.clock.min-quantum = 2048
-    #    default.clock.max-quantum = 2048
-    #}
-    #
-    #context.modules = [
-    #    { name = libpipewire-module-rtkit
-    #        args = {
-    #            nice.level = -15
-    #            rt.prio = 88
-    #            rt.time.soft = 200000
-    #            rt.time.hard = 200000
-    #        }
-    #        flags = [ ifexists nofail ]
-    #    }
-    #]
-    #EOF
-    #systemctl --user restart pipewire pipewire-pulse wireplumber
-
-    progress_bar 30
-    #OS Pacman update
     if [ -f /var/lib/pacman/db.lck ]; then
         echo "⚠ Pacman lock found. Checking if process exists..." >> "$LOG_FILE"
         if ! pgrep -x pacman >/dev/null; then
@@ -133,44 +45,13 @@ if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
             echo "Another pacman process is running. Exiting..." >> "$LOG_FILE"
         fi
     fi
-    progress_bar 50
-    if [[ "$VERSION_ID" < "$VERSION_ID_CURRENT" ]]; then
-        EXIT_CODE=0 
-        #New pacman format with Arch Archive
-        sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
-        
-        #Timezone fix
-        echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/timedatectl set-timezone *" | sudo tee /etc/sudoers.d/99-timedatectl
-        sudo chmod 440 /etc/sudoers.d/99-timedatectl
-        
-        #1.0 pacman Fixes
-        sudo pacman -Rdd plasma-meta --noconfirm && sudo pacman -Rns krdp freerdp2 --noconfirm
-        sudo pacman -Sy archlinux-keyring --noconfirm
-        sudo rm -rf /usr/lib/firmware/nvidia/ad103 /usr/lib/firmware/nvidia/ad104 /usr/lib/firmware/nvidia/ad106 /usr/lib/firmware/nvidia/ad107
-        progress_bar 60
-        #Update dependencies
-        
-        if [[ "$CURRENT_DATE" != "$TARGET_DATE" ]]; then
-            echo ">>> Updating repo from $CURRENT_DATE to $TARGET_DATE..." >> "$LOG_FILE"
-            
-            # Actualizar pacman.conf
-            sudo sed -i "s|archive.archlinux.org/repos/.*/\$repo|archive.archlinux.org/repos/${TARGET_DATE}/\$repo|g" /etc/pacman.conf
-            sudo pacman -Sy --noconfirm archlinux-keyring >> $LOG_FILE 2>&1
-            progress_bar 70
-            sudo pacman-key --populate archlinux >> $LOG_FILE 2>&1
-            progress_bar 80
-            sudo pacman -Syyu --noconfirm >> $LOG_FILE 2>&1
-            EXIT_CODE=$?
-            
-            if ! echo "playnix" | sudo -S pwd > /dev/null 2>&1; then
-                echo "sudo error! --- $(date +%s) ---" >> $LOG_FILE
-                exit 1
-            fi
-            
-            if [ $EXIT_CODE -eq 0 ]; then
-                echo "$TARGET_DATE" | sudo tee /etc/playnix-repo-date
-                echo "✓ Repo updated to $TARGET_DATE" >> "$LOG_FILE"
-# OS info                
+    pacman -Q plasma-meta &>/dev/null && sudo pacman -Rdd plasma-meta --noconfirm
+    pacman -Q krdp &>/dev/null && sudo pacman -Rns krdp freerdp2 --noconfirm
+    sudo pacman -Sy archlinux-keyring --noconfirm
+    sudo rm -rf /usr/lib/firmware/nvidia/ad103 /usr/lib/firmware/nvidia/ad104 /usr/lib/firmware/nvidia/ad106 /usr/lib/firmware/nvidia/ad107
+}
+set_version(){
+   check_sudo
 cat << EOF | sudo tee /etc/os-release > /dev/null
 NAME="Playnix OS"
 PRETTY_NAME="Playnix OS Gaming Edition"
@@ -178,42 +59,216 @@ ID=playnix
 ID_LIKE=arch
 BUILD_ID=rolling
 ANSI_COLOR="38;2;23;147;209"
-HOME_URL="https://shop.playnix.io/"
+HOME_URL="https://www.playnix.io/"
 DOCUMENTATION_URL="https://manual.playnix.io"
 SUPPORT_URL="https://support.playnix.io"
 BUG_REPORT_URL="https://support.playnix.io"
 LOGO=playnix
 VERSION_CODENAME="Playnix OS"
-VERSION_ID=${VERSION_ID_CURRENT}
+VERSION_ID=${VERSION_ID_TARGET}
 VARIANT="Playnix OS"
 VARIANT_ID=${UUID}
+EOF    
+}
+update_pacman(){
+    check_sudo
+    check_pacman_health
+    # Actualizar pacman.conf
+    sudo sed -i "s|archive.archlinux.org/repos/.*/\$repo|archive.archlinux.org/repos/${PACMAN_TARGET_DATE}/\$repo|g" /etc/pacman.conf
+    sudo pacman -Sy --noconfirm archlinux-keyring >> $LOG_FILE 2>&1
+    progress_bar 70
+    sudo pacman-key --populate archlinux >> $LOG_FILE 2>&1
+    progress_bar 80
+    sudo pacman -Syyu --noconfirm >> $LOG_FILE 2>&1
+    EXIT_CODE=$?
+    
+    if [ $EXIT_CODE -eq 0 ]; then
+        check_sudo
+        echo "$PACMAN_TARGET_DATE" | sudo tee /etc/playnix-repo-date
+        echo "✓ Repo updated to $PACMAN_TARGET_DATE" >> "$LOG_FILE"
+        echo "✓ Pacman completed: $(date)" >> "$LOG_FILE"
+        # OS info                
+        set_version
+    else
+        echo "✗ Update failed, reverting..." >> "$LOG_FILE"
+        echo "✗ Pacman Failed: $(date)" >> "$LOG_FILE"
+        if [[ "$PACMAN_CURRENT_DATE" != "none" ]]; then
+            sudo sed -i "s|archive.archlinux.org/repos/.*/\$repo|archive.archlinux.org/repos/${PACMAN_CURRENT_DATE}/\$repo|g" /etc/pacman.conf
+        fi
+    fi    
+    return $EXIT_CODE
+}
+
+#Fixes
+fix_audio(){
+    check_sudo
+    # Fix audio lag
+    mkdir -p ~/.config/pipewire/pipewire.conf.d && cat > ~/.config/pipewire/pipewire.conf.d/99-gaming.conf << 'EOF'
+context.properties = {
+   default.clock.rate = 48000
+   default.clock.quantum = 2048
+   default.clock.min-quantum = 2048
+   default.clock.max-quantum = 2048
+}
 EOF
-                # Specific versions patches
-                if [[ "$VERSION_ID" < "1.1" ]]; then
-                    progress_bar 90
-                    #EmuDeck fix
-                    sudo pacman -Syu --noconfirm jq zenity flatpak unzip bash fuse2 git rsync libnewt python >> $LOG_FILE 2>&1
-                fi
+    sudo pacman -S rtkit --noconfirm
+    cat > ~/.config/pipewire/pipewire.conf.d/99-gaming.conf << 'EOF'
+context.properties = {
+   default.clock.rate = 48000
+   default.clock.quantum = 2048
+   default.clock.min-quantum = 2048
+   default.clock.max-quantum = 2048
+}
+
+context.modules = [
+   { name = libpipewire-module-rtkit
+       args = {
+           nice.level = -15
+           rt.prio = 88
+           rt.time.soft = 200000
+           rt.time.hard = 200000
+       }
+       flags = [ ifexists nofail ]
+   }
+]
+EOF
+    systemctl --user restart pipewire pipewire-pulse wireplumber    
+}
+fix_timeout(){
+    CURRENT_TIMEOUT=$(grep TimeoutStartSec /etc/systemd/system/boot-custom-actions.service | grep -oE '[0-9]+')
+    if [[ "$CURRENT_TIMEOUT" -le 90 ]]; then
+        check_sudo
+        sudo sed -i 's/TimeoutStartSec=.*/TimeoutStartSec=6000/' /etc/systemd/system/boot-custom-actions.service
+        sudo systemctl daemon-reload    
+        echo ">>> Timeout was 90, rebooting to apply new timeout..." >> "$LOG_FILE"
+        progress_bar 100
+        sudo reboot
+    fi
+}
+fix_sonic_mania(){
+    if ! pacman -Q lib32-vulkan-radeon &>/dev/null; then
+        check_sudo
+        sudo pacman -S lib32-vulkan-radeon --noconfirm >> $LOG_FILE 2>&1
+        sudo pacman -Rdd nvidia-utils lib32-nvidia-utils --noconfirm >> $LOG_FILE 2>&1 || true
+        echo "✓ fix_sonic_mania applied" >> $LOG_FILE
+    fi
+}
+fix_timezone(){
+    check_sudo
+    echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/timedatectl set-timezone *" | sudo tee /etc/sudoers.d/99-timedatectl
+    sudo chmod 440 /etc/sudoers.d/99-timedatectl
+}
+fix_emudeck(){
+    check_sudo
+    sudo pacman -Syu --noconfirm jq zenity flatpak unzip bash fuse2 git rsync libnewt python >> $LOG_FILE 2>&1
+}
+
+fix_branch_message(){
+      
+   BRANCH_FILE="/usr/lib/os-branch-select"        
+   if [[ ! -f "$BRANCH_FILE" ]]; then
+   
+      check_sudo
+   
+sudo tee /usr/lib/os-branch-select << 'EOF'
+#!/usr/bin/bash
+
+BRANCHES=("stable" "beta")
+BRANCH_FILE="/var/lib/playnix/branch"
+
+if [[ $# -eq 0 ]]; then
+    for b in "${BRANCHES[@]}"; do
+        echo "$b"
+    done
+else
+    SELECTED="$1"
+    for b in "${BRANCHES[@]}"; do
+        if [[ "$b" == "$SELECTED" ]]; then
+            echo "$SELECTED" > "$BRANCH_FILE"
+            exit 0
+        fi
+    done
+    echo "Unknown branch: $SELECTED" >&2
+    exit 1
+fi
+EOF
+
+      sudo chmod +x /usr/lib/os-branch-select   
+      sudo mkdir -p /var/lib/playnix
+      sudo chown playnix:playnix /var/lib/playnix
+   fi
+}
+
+#Features
+add_sd_automount_reboot(){
+    RULES_FILE="/usr/lib/udev/rules.d/99-steamos-automount.rules"        
+    if [[ ! -f "$RULES_FILE" ]]; then    
+        check_sudo
+        HWSUPPORT="/usr/libexec/hwsupport"
+        REPO_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/automount"
                 
-            else
-                echo "✗ Update failed, reverting..." >> "$LOG_FILE"
-                if [[ "$CURRENT_DATE" != "none" ]]; then
-                    sudo sed -i "s|archive.archlinux.org/repos/.*/\$repo|archive.archlinux.org/repos/${CURRENT_DATE}/\$repo|g" /etc/pacman.conf
-                fi
-            fi
-        fi
+        sudo mkdir -p "$HWSUPPORT"
         
+        for f in block-device-event.sh common-functions steamos-automount.sh; do
+            sudo curl -fsSL -o "$HWSUPPORT/$f" "$REPO_URL/hwsupport/$f"
+        done
+        sudo chmod +x "$HWSUPPORT"/*.sh
         
-        if [ $EXIT_CODE -eq 0 ]; then
-            echo "✓ Pacman completed: $(date)" >> "$LOG_FILE"
+        sudo curl -fsSL -o "$RULES_FILE" "$REPO_URL/udev/99-steamos-automount.rules"
+        
+        sudo udevadm control --reload
+        sudo udevadm trigger
+        sudo reboot          
+    fi
+}
+
+echo "Remote code! --- $(date +%s) ---" >> $LOG_FILE
+
+
+if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
+
+    echo -e "\033[2J\033[H" | sudo tee /dev/tty1 > /dev/null
+    echo -e "\033[38;5;214m Updating PlaynixOS... \033[0m" | sudo tee /dev/tty1 > /dev/null
+    progress_bar 0
+
+    echo "Running as: $(whoami)" >> "$LOG_FILE"        
+    
+    #Fix timeout on 1.0
+    fix_timeout
+        
+    echo "✓ UUID in rollout group (${ROLLOUT_PERCENTAGE}% < ${ROLLOUT_TARGET}%)"
+    echo "BEGIN REMOTE CODE --- $(date +%s) ---" >> "$LOG_FILE"    
+    progress_bar 50
+    if [[ "$VERSION_ID_CURRENT" < "$VERSION_ID_TARGET" ]]; then
+        EXIT_CODE=0 
+        progress_bar 60
+        #Update dependencies
+        
+        #if [[ "$PACMAN_CURRENT_DATE" != "$PACMAN_TARGET_DATE" ]]; then
+            echo ">>> Updating repo from $PACMAN_CURRENT_DATE to $PACMAN_TARGET_DATE..." >> "$LOG_FILE"
+
+            update_pacman
+            EXIT_CODE=$?            
+            progress_bar 90
             
-        else
-            echo "✗ Pacman Failed: $(date)" >> "$LOG_FILE"
-        fi
+            # Specific versions patches
+            if [ $EXIT_CODE -eq 0 ]; then                
+                if [[ "$VERSION_ID_CURRENT" < "1.1" ]]; then                
+                    fix_emudeck
+                    fix_timezone
+                fi  
+                if [[ "$VERSION_ID_CURRENT" < "1.2" ]]; then        
+                    fix_sonic_mania            
+                    fix_branch_message
+                    add_sd_automount_reboot
+                fi                         
+            fi 
+
+        #fi                        
     else
         echo "System up to date..." >> "$LOG_FILE"
     fi
-    
+
     progress_bar 100
     echo -e "\033[32m Done! \033[0m" | sudo tee /dev/tty1 > /dev/null
     
