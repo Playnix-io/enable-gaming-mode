@@ -93,7 +93,7 @@ VERSION_CODENAME="Playnix OS"
 VERSION_ID=${VERSION_ID_TARGET}
 VARIANT="Playnix OS"
 VARIANT_ID=${UUID}
-EOF    
+EOF
 }
 update_pacman(){
     check_sudo
