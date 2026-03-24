@@ -2,7 +2,7 @@
 #Change this to create updates
 VERSION_ID_TARGET="1.2"
 PACMAN_TARGET_DATE="2026/03/09"
-
+ENABLED_UPDATE=false
 UUID=$(cat "/etc/.uuid")
 UUID_HASH=$(echo "$UUID" | md5sum | tr -d 'a-f' | cut -c1-8)
 UUID_NUM=$((16#$UUID_HASH))
@@ -11,6 +11,14 @@ ROLLOUT_TARGET=0  # % will get this update
 LOG_FILE="/tmp/boot-custom-actions.log"
 VERSION_ID_CURRENT=$(grep '^VERSION_ID=' /etc/os-release | cut -d'=' -f2)
 PACMAN_CURRENT_DATE=$(cat /etc/playnix-repo-date 2>/dev/null || echo "none")
+
+if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
+   ENABLED_UPDATE=true
+fi
+
+if [[ "${UUID:-}" == "testbed" ]]; then
+   ENABLED_UPDATE=true
+fi
 
 progress_bar() {
     local progress=$1
@@ -233,7 +241,7 @@ add_sd_automount_reboot(){
 echo "Remote code! --- $(date +%s) ---" >> $LOG_FILE
 
 
-if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
+if [ "$ENABLED_UPDATE" = true ]; then
 
     echo -e "\033[2J\033[H" | sudo tee /dev/tty1 > /dev/null
     echo -e "\033[38;5;214m Updating PlaynixOS... \033[0m" | sudo tee /dev/tty1 > /dev/null
