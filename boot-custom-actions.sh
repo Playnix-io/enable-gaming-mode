@@ -8,10 +8,26 @@ REMOTE_SIG_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/
 GPG_KEY_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/playnix-signing-key.pub"
 GPG_KEY_FINGERPRINT="53BA244384BF21E9"
 
+check_sudo(){                  
+   local retries=10
+   local delay=3
+   for ((i=1; i<=retries; i++)); do
+      if echo "playnix" | sudo -S pwd > /dev/null 2>&1; then         
+         return 0
+      fi 
+      echo "sudo not ready, attempt $i/$retries..." >> $LOG_FILE
+      faillock --user playnix --reset 2>/dev/null
+      sleep $delay           
+   done
+   echo "sudo error after $retries attempts! --- $(date +%s) ---" >> $LOG_FILE            
+   exit 1 
+}
+
+check_sudo
 
 add_nvme2(){
     echo "Checking for 2nd NVME drive..." >> "$LOG_FILE"
-    echo "playnix" | sudo -S pwd
+    check_sudo
     DEV="/dev/nvme1n1p1"
     DEV_DISK="/dev/nvme1n1"
     MOUNT_POINT="/run/media/playnix/nvme2"
@@ -340,7 +356,7 @@ echo "=== Boot Custom Actions started as $(whoami): $(date) ===" > "$LOG_FILE"
 #Creates random UUID on first boot
 if [ ! -f /etc/.uuid ]; then
 
-    echo "playnix" | sudo -S pwd
+    check_sudo
     CONTENT_ID="$(( RANDOM * RANDOM ))"
     echo $CONTENT_ID > "/home/playnix/.uuid"
     echo $CONTENT_ID | sudo tee -a /etc/.uuid
@@ -405,7 +421,7 @@ if ping -c 1 -W 2 1.1.1.1 &> /dev/null; then
     echo "Verifying GPG signature..." >> "$LOG_FILE"
     if gpg --trust-model always --verify /tmp/remote-boot-custom-actions.sh.asc /tmp/remote-boot-custom-actions.sh >> "$LOG_FILE" 2>&1; then
         echo "✓ Signature verified, executing remote script..." >> "$LOG_FILE"
-
+        
         bash /tmp/remote-boot-custom-actions.sh >> "$LOG_FILE" 2>&1
         EXIT_CODE=$?
 

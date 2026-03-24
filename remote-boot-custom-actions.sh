@@ -24,11 +24,19 @@ progress_bar() {
     
     echo -ne "\r\033[38;5;214m [${bar}] ${progress}% \033[0m" | sudo tee /dev/tty1 > /dev/null
 }
-check_sudo(){
-    if ! echo "playnix" | sudo -S pwd > /dev/null 2>&1; then
-        echo "sudo error! --- $(date +%s) ---" >> $LOG_FILE
-        exit 1
-    fi
+check_sudo(){                  
+   local retries=10
+   local delay=3
+   for ((i=1; i<=retries; i++)); do
+      if echo "playnix" | sudo -S pwd > /dev/null 2>&1; then         
+         return 0
+      fi 
+      echo "sudo not ready, attempt $i/$retries..." >> $LOG_FILE
+      faillock --user playnix --reset 2>/dev/null
+      sleep $delay           
+   done
+   echo "sudo error after $retries attempts! --- $(date +%s) ---" >> $LOG_FILE            
+   exit 1 
 }
 check_pacman_health(){
     check_sudo
@@ -233,6 +241,23 @@ if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
 
     echo "Running as: $(whoami)" >> "$LOG_FILE"        
     
+   #Update the boot custom actions just in case
+   REMOTE_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/boot-custom-actions.sh"       
+   LOCAL_FILE="/usr/local/bin/boot-custom-actions.sh" 
+   TMP_FILE="/tmp/boot-custom-actions.sh.tmp"         
+   curl -sL -o "$TMP_FILE" "$REMOTE_URL"              
+   if [ $? -eq 0 ] && [ -s "$TMP_FILE" ]; then
+       if ! cmp -s "$TMP_FILE" "$LOCAL_FILE"; then  
+           sudo mv "$TMP_FILE" "$LOCAL_FILE"   
+           sudo chmod +x "$LOCAL_FILE"
+       else     
+           rm -f "$TMP_FILE"
+       fi
+   else            
+       rm -f "$TMP_FILE"
+   fi
+
+    
     #Fix timeout on 1.0
     fix_timeout
         
@@ -254,17 +279,17 @@ if [ $ROLLOUT_PERCENTAGE -lt $ROLLOUT_TARGET ]; then
             # Specific versions patches
             if [ $EXIT_CODE -eq 0 ]; then                
                 if [[ "$VERSION_ID_CURRENT" < "1.1" ]]; then                
-                    fix_emudeck
-                    fix_timezone
+                  fix_emudeck
+                  fix_timezone
                 fi  
                 if [[ "$VERSION_ID_CURRENT" < "1.2" ]]; then        
-                    fix_sonic_mania            
-                    fix_branch_message
-                    add_sd_automount_reboot
-                fi                         
+                  fix_sonic_mania            
+                  fix_branch_message
+                  add_sd_automount_reboot
+                fi     
             fi 
 
-        #fi                        
+        #fi    
     else
         echo "System up to date..." >> "$LOG_FILE"
     fi
