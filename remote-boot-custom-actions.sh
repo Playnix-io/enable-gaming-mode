@@ -1,13 +1,13 @@
 #!/bin/bash
 #Change this to create updates
-VERSION_ID_TARGET="1.2"
+VERSION_ID_TARGET="1.3"
 PACMAN_TARGET_DATE="2026/03/09"
 ENABLED_UPDATE=false
 UUID=$(cat "/etc/.uuid")
 UUID_HASH=$(echo "$UUID" | md5sum | tr -d 'a-f' | cut -c1-8)
 UUID_NUM=$((16#$UUID_HASH))
 ROLLOUT_PERCENTAGE=$((UUID_NUM % 100))
-ROLLOUT_TARGET=0  # % will get this update
+ROLLOUT_TARGET=100  # % will get this update
 LOG_FILE="/tmp/boot-custom-actions.log"
 VERSION_ID_CURRENT=$(grep '^VERSION_ID=' /etc/os-release | cut -d'=' -f2)
 PACMAN_CURRENT_DATE=$(cat /etc/playnix-repo-date 2>/dev/null || echo "none")
@@ -29,18 +29,6 @@ sudo(){
     command sudo -A "$@"
 }
 
-progress_bar() {
-    local progress=$1
-    local width=40
-    local filled=$(( progress * width / 100 ))
-    local empty=$(( width - filled ))
-    
-    local bar=""
-    for ((i=0; i<filled; i++)); do bar+="█"; done
-    for ((i=0; i<empty; i++)); do bar+="░"; done
-    
-    echo -ne "\r\033[38;5;214m [${bar}] ${progress}% \033[0m" | sudo tee /dev/tty1 > /dev/null
-}
 check_sudo(){                  
    local retries=10
    local delay=3
@@ -54,6 +42,19 @@ check_sudo(){
    done
    echo "sudo error after $retries attempts! --- $(date +%s) ---" >> $LOG_FILE            
    exit 1 
+}
+progress_bar() {
+    check_sudo
+    local progress=$1
+    local width=40
+    local filled=$(( progress * width / 100 ))
+    local empty=$(( width - filled ))
+    
+    local bar=""
+    for ((i=0; i<filled; i++)); do bar+="█"; done
+    for ((i=0; i<empty; i++)); do bar+="░"; done
+    
+    echo -ne "\r\033[38;5;214m [${bar}] ${progress}% \033[0m" | sudo tee /dev/tty1 > /dev/null
 }
 check_pacman_health(){
     check_sudo
@@ -299,7 +300,7 @@ if [ "$ENABLED_UPDATE" = true ]; then
                   fix_emudeck
                   fix_timezone
                 fi  
-                if [[ "$VERSION_ID_CURRENT" < "1.2" ]]; then        
+                if [[ "$VERSION_ID_CURRENT" < "1.3" ]]; then        
                   fix_sonic_mania            
                   fix_branch_message
                   add_sd_automount_reboot
