@@ -20,6 +20,15 @@ if [[ "${UUID:-}" == "testbed" ]]; then
    ENABLED_UPDATE=true
 fi
 
+_ASKPASS="/tmp/.askpass_$$"
+printf '#!/bin/bash\necho "playnix"\n' > "$_ASKPASS"
+chmod +x "$_ASKPASS"
+export SUDO_ASKPASS="$_ASKPASS"
+
+sudo(){
+    command sudo -A "$@"
+}
+
 progress_bar() {
     local progress=$1
     local width=40
@@ -36,7 +45,7 @@ check_sudo(){
    local retries=10
    local delay=3
    for ((i=1; i<=retries; i++)); do
-      if echo "playnix" | sudo -S pwd > /dev/null 2>&1; then         
+      if sudo pwd > /dev/null 2>&1; then
          return 0
       fi 
       echo "sudo not ready, attempt $i/$retries..." >> $LOG_FILE
@@ -309,4 +318,5 @@ else
     echo "UPDATES not enabled for you --- $(date +%s) ---" >> "$LOG_FILE"
 fi
 
+rm -f "$_ASKPASS"
 exit 0
