@@ -226,7 +226,7 @@ EOF
 }
 
 #Features
-add_sd_automount_reboot(){
+add_sd_automount(){
     RULES_FILE="/usr/lib/udev/rules.d/99-steamos-automount.rules"        
     if [[ ! -f "$RULES_FILE" ]]; then    
         check_sudo
@@ -243,8 +243,7 @@ add_sd_automount_reboot(){
         sudo curl -fsSL -o "$RULES_FILE" "$REPO_URL/udev/99-steamos-automount.rules"
         
         sudo udevadm control --reload
-        sudo udevadm trigger
-        sudo reboot          
+        sudo udevadm trigger       
     fi
 }
 
@@ -301,9 +300,9 @@ if [ "$ENABLED_UPDATE" = true ]; then
                   fix_timezone
                 fi  
                 if [[ "$VERSION_ID_CURRENT" < "1.3" ]]; then        
-                  #fix_sonic_mania            
-                  #fix_branch_message
-                  #add_sd_automount_reboot
+                  fix_sonic_mania            
+                  fix_branch_message
+                  add_sd_automount
                 fi     
             fi 
 
