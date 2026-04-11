@@ -302,7 +302,7 @@ if [ "$ENABLED_UPDATE" = true ]; then
                 if [[ "$VERSION_ID_CURRENT" < "1.3" ]]; then        
                   fix_sonic_mania            
                   #fix_branch_message
-                  add_sd_automount
+                  #add_sd_automount
                 fi     
             fi 
 
