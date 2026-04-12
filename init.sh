@@ -1,7 +1,33 @@
 #!/bin/bash
 (
 
-echo "playnix" | sudo -S pwd
+
+_ASKPASS="/tmp/.askpass_$$"
+printf '#!/bin/bash\necho "playnix"\n' > "$_ASKPASS"
+chmod +x "$_ASKPASS"
+export SUDO_ASKPASS="$_ASKPASS"
+
+sudo(){
+    command sudo -A "$@"
+}
+
+
+check_sudo(){                  
+   local retries=10
+   local delay=3
+   for ((i=1; i<=retries; i++)); do
+      if sudo pwd > /dev/null 2>&1; then
+         return 0
+      fi 
+      echo "sudo not ready, attempt $i/$retries..." >> $LOG_FILE
+      faillock --user playnix --reset 2>/dev/null
+      sleep $delay           
+   done
+   echo "sudo error after $retries attempts! --- $(date +%s) ---" >> $LOG_FILE            
+   exit 1 
+}
+
+check_sudo
 #Make sure our time is up to date
 sudo systemctl restart systemd-timesyncd
 
@@ -24,7 +50,7 @@ sudoers_file="/etc/sudoers.d/sddm_config_edit"
 
 #Missing fonts. To do - Move them to playnix pacman repo
 sudo pacman -S noto-fonts noto-fonts-cjk noto-fonts-emoji parted --noconfirm
-echo "playnix" | sudo -S pwd
+check_sudo
 echo "8"
 echo "#Installing Steam"
 sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
@@ -34,9 +60,9 @@ sudo pacman -Sy steam --noconfirm
 sudo pacman -S nano curl git wget base-devel firefox plymouth gwenview fuse lib32-vulkan-radeon --noconfirm
 
 git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
-echo "playnix" | sudo -S pwd
+check_sudo
 yay -S gamescope-session-steam-git --noconfirm --sudoloop
-echo "playnix" | sudo -S pwd
+check_sudo
 echo "24"
 echo "#Setting up auto login"
 sudo curl -L -o "/usr/bin/steamos-session-select" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/steamos-session-select"
@@ -54,30 +80,31 @@ echo 'ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video $sys$devpath
 sudo pacman -S vulkan-intel lib32-vulkan-intel mesa lib32-mesa lib32-glibc lib32-giflib lib32-libpulse \
  lib32-libxcomposite lib32-libxrandr \
  lib32-alsa-plugins lib32-alsa-lib --noconfirm
-echo "playnix" | sudo -S pwd
+check_sudo
 echo "48"
 echo "#Creating desktop icon"
 curl -L -o "$HOME/Desktop/back.desktop" "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/back.desktop"
 chmod +x "$HOME/Desktop/back.desktop"
 
 #Setting up SD Card automounter
-RULES_FILE="/usr/lib/udev/rules.d/99-steamos-automount.rules"
-HWSUPPORT="/usr/libexec/hwsupport"
-REPO_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/automount"
-
-echo "Installing steamos-automount..."
-
-sudo mkdir -p "$HWSUPPORT"
-
-for f in block-device-event.sh common-functions steamos-automount.sh; do
-    sudo curl -fsSL -o "$HWSUPPORT/$f" "$REPO_URL/hwsupport/$f"
-done
-sudo chmod +x "$HWSUPPORT"/*.sh
-
-sudo curl -fsSL -o "$RULES_FILE" "$REPO_URL/udev/99-steamos-automount.rules"
-
-sudo udevadm control --reload
-sudo udevadm trigger
+RULES_FILE="/usr/lib/udev/rules.d/99-steamos-automount.rules"        
+if [[ ! -f "$RULES_FILE" ]]; then    
+    check_sudo
+    HWSUPPORT="/usr/libexec/hwsupport"
+    REPO_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/automount"
+            
+    sudo mkdir -p "$HWSUPPORT"
+    
+    for f in block-device-event.sh common-functions steamos-automount.sh; do
+        sudo curl -fsSL -o "$HWSUPPORT/$f" "$REPO_URL/hwsupport/$f"
+    done
+    sudo chmod +x "$HWSUPPORT"/*.sh
+    
+    sudo curl -fsSL -o "$RULES_FILE" "$REPO_URL/udev/99-steamos-automount.rules"
+    
+    sudo udevadm control --reload
+    sudo udevadm trigger       
+fi
 
 
 echo "56"
@@ -91,7 +118,7 @@ sudo cp /etc/systemd/logind.conf /etc/systemd/logind.conf.bak
 sudo curl -L -o /etc/systemd/logind.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/logind.conf"
 
 echo "72"
-echo "playnix" | sudo -S pwd
+check_sudo
 #echo "#Installing Decky"
 #sh -c 'rm -f /tmp/user_install_script.sh; if curl -S -s -L -O --output-dir /tmp/ --connect-timeout 60 https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/user_install_script.sh; then bash /tmp/user_install_script.sh; else echo "Something went wrong, please report this if it is a bug"; read; fi'
 echo "80"
@@ -111,8 +138,42 @@ sudo systemctl enable boot-custom-actions.service
 echo "playnix ALL=(ALL) NOPASSWD: /usr/bin/timedatectl set-timezone *" | sudo tee /etc/sudoers.d/99-timedatectl
 sudo chmod 440 /etc/sudoers.d/99-timedatectl
 
-#pacman lock
-sudo curl -L -o /etc/pacman.conf "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/pacman.conf"
+#EmuDeck
+sudo pacman -Syu --noconfirm jq zenity flatpak unzip bash fuse2 git rsync libnewt python
+
+#Branch
+BRANCH_FILE="/usr/lib/os-branch-select"        
+   if [[ ! -f "$BRANCH_FILE" ]]; then
+   
+      check_sudo
+   
+sudo tee /usr/lib/os-branch-select << 'EOF'
+#!/usr/bin/bash
+
+BRANCHES=("stable" "beta")
+BRANCH_FILE="/var/lib/playnix/branch"
+
+if [[ $# -eq 0 ]]; then
+    for b in "${BRANCHES[@]}"; do
+        echo "$b"
+    done
+else
+    SELECTED="$1"
+    for b in "${BRANCHES[@]}"; do
+        if [[ "$b" == "$SELECTED" ]]; then
+            echo "$SELECTED" > "$BRANCH_FILE"
+            exit 0
+        fi
+    done
+    echo "Unknown branch: $SELECTED" >&2
+    exit 1
+fi
+EOF
+
+      sudo chmod +x /usr/lib/os-branch-select   
+      sudo mkdir -p /var/lib/playnix
+      sudo chown playnix:playnix /var/lib/playnix
+   fi
 
 #sudo systemctl enable --now sshd
 
