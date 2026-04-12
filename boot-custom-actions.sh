@@ -27,6 +27,14 @@ check_sudo
 
 add_nvme2(){
     echo "Checking for 2nd NVME drive..." >> "$LOG_FILE"
+    
+    SYSTEM_DISK=$(findmnt -n -o SOURCE / | sed 's/p[0-9]*$//')
+     
+     if [[ "$SYSTEM_DISK" == "/dev/nvme1n1" ]]; then
+         echo "ERROR: nvme1n1 is the system disk! Aborting." >> "$LOG_FILE"
+         return 1
+     fi
+    
     check_sudo
     DEV="/dev/nvme1n1p1"
     DEV_DISK="/dev/nvme1n1"
