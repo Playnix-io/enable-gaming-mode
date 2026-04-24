@@ -7,7 +7,7 @@ UUID=$(cat "/etc/.uuid")
 UUID_HASH=$(echo "$UUID" | md5sum | tr -d 'a-f' | cut -c1-8)
 UUID_NUM=$((16#$UUID_HASH))
 ROLLOUT_PERCENTAGE=$((UUID_NUM % 100))
-ROLLOUT_TARGET=0  # % will get this update
+ROLLOUT_TARGET=100  # % will get this update
 LOG_FILE="/tmp/boot-custom-actions.log"
 VERSION_ID_CURRENT=$(grep '^VERSION_ID=' /etc/os-release | cut -d'=' -f2)
 PACMAN_CURRENT_DATE=$(cat /etc/playnix-repo-date 2>/dev/null || echo "none")
@@ -279,7 +279,7 @@ add_thermal_guard(){
    
    sudo chmod +x "$SCRIPT"
    sudo systemctl daemon-reload
-   sudo systemctl enable thermal-guard.service --now
+   sudo systemctl enable thermal-guard.service
 }
 
 echo "Remote code! --- $(date +%s) ---" >> $LOG_FILE
