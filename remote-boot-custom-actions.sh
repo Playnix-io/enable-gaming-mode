@@ -1,6 +1,6 @@
 #!/bin/bash
 #Change this to create updates
-VERSION_ID_TARGET="1.3"
+VERSION_ID_TARGET="1.4"
 PACMAN_TARGET_DATE="2026/03/09"
 ENABLED_UPDATE=false
 UUID=$(cat "/etc/.uuid")
@@ -268,12 +268,12 @@ add_thermal_guard(){
    
    check_sudo
    if ! sudo curl -fL --retry 3 -o "$SERVICE" "$BASE_URL/thermal-guard.service"; then
-      echo "ERROR: failed to download thermal-guard.service" >&2
+      echo "ERROR: failed to download thermal-guard.service" >> $LOG_FILE 2>&1
       return 1
    fi
    
    if ! sudo curl -fL --retry 3 -o "$SCRIPT" "$BASE_URL/thermal-guard.sh"; then
-      echo "ERROR: failed to download thermal-guard.sh" >&2
+      echo "ERROR: failed to download thermal-guard.sh" >> $LOG_FILE 2>&1
       return 1
    fi
    
