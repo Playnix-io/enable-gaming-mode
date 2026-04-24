@@ -1,0 +1,12 @@
+[Unit]
+Description=Thermal Guard - Shutdown on overheat
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/thermal-guard.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

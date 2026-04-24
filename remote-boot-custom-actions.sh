@@ -20,6 +20,11 @@ if [[ "${UUID:-}" == "testbed" ]]; then
    ENABLED_UPDATE=true
 fi
 
+
+version_lt() {
+    [ "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" = "$1" ] && [ "$1" != "$2" ]
+}
+
 _ASKPASS="/tmp/.askpass_$$"
 printf '#!/bin/bash\necho "playnix"\n' > "$_ASKPASS"
 chmod +x "$_ASKPASS"
@@ -28,6 +33,7 @@ export SUDO_ASKPASS="$_ASKPASS"
 sudo(){
     command sudo -A "$@"
 }
+
 
 check_sudo(){                  
    local retries=10
@@ -113,8 +119,6 @@ update_pacman(){
         echo "$PACMAN_TARGET_DATE" | sudo tee /etc/playnix-repo-date
         echo "✓ Repo updated to $PACMAN_TARGET_DATE" >> "$LOG_FILE"
         echo "✓ Pacman completed: $(date)" >> "$LOG_FILE"
-        # OS info                
-        set_version
     else
         echo "✗ Update failed, reverting..." >> "$LOG_FILE"
         echo "✗ Pacman Failed: $(date)" >> "$LOG_FILE"
@@ -225,6 +229,12 @@ EOF
    fi
 }
 
+update_boot_scripts(){
+   check_sudo
+   sudo curl -L -o /usr/local/bin/boot-custom-actions.sh "https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/boot-custom-actions.sh"
+   sudo chmod +x /usr/local/bin/boot-custom-actions.sh
+}
+
 #Features
 add_sd_automount(){
     RULES_FILE="/usr/lib/udev/rules.d/99-steamos-automount.rules"        
@@ -245,6 +255,31 @@ add_sd_automount(){
         sudo udevadm control --reload
         sudo udevadm trigger       
     fi
+}
+
+add_thermal_guard(){
+   SERVICE="/etc/systemd/system/thermal-guard.service"
+   SCRIPT="/usr/local/bin/thermal-guard.sh"
+   BASE_URL="https://raw.githubusercontent.com/Playnix-io/enable-gaming-mode/main/thermal"
+   
+   if [[ -f "$SERVICE" && -f "$SCRIPT" ]]; then
+      return 0
+   fi
+   
+   check_sudo
+   if ! sudo curl -fL --retry 3 -o "$SERVICE" "$BASE_URL/thermal-guard.service"; then
+      echo "ERROR: failed to download thermal-guard.service" >&2
+      return 1
+   fi
+   
+   if ! sudo curl -fL --retry 3 -o "$SCRIPT" "$BASE_URL/thermal-guard.sh"; then
+      echo "ERROR: failed to download thermal-guard.sh" >&2
+      return 1
+   fi
+   
+   sudo chmod +x "$SCRIPT"
+   sudo systemctl daemon-reload
+   sudo systemctl enable thermal-guard.service --now
 }
 
 echo "Remote code! --- $(date +%s) ---" >> $LOG_FILE
@@ -294,16 +329,23 @@ if [ "$ENABLED_UPDATE" = true ]; then
             progress_bar 90
             
             # Specific versions patches
-            if [ $EXIT_CODE -eq 0 ]; then                
-                if [[ "$VERSION_ID_CURRENT" < "1.1" ]]; then                
+            if [ $EXIT_CODE -eq 0 ]; then     
+               (         
+                if version_lt "$VERSION_ID_CURRENT" "1.1"; then               
                   fix_emudeck
                   fix_timezone
                 fi  
-                if [[ "$VERSION_ID_CURRENT" < "1.3" ]]; then        
+                if version_lt "$VERSION_ID_CURRENT" "1.3"; then       
                   fix_sonic_mania            
                   fix_branch_message
                   add_sd_automount
-                fi     
+                  update_boot_scripts
+                fi
+                if version_lt "$VERSION_ID_CURRENT" "1.4"; then   
+                  add_thermal_guard
+                fi
+                
+               ) && set_version      
             fi 
 
         #fi    
